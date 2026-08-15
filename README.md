@@ -4,9 +4,9 @@ A structured, long-term practice repository focused on strengthening **SQL and P
 
 The main idea behind this repository is simple:
 
-> **Solve the data problem in SQL, understand the logic, and recreate the same or similar operation in Pandas whenever it adds learning value.**
+> **Solve the data problem in SQL, understand the logic deeply, explore alternative SQL approaches when useful, and recreate the same or similar operation in Pandas whenever it adds learning value.**
 
-This repository emphasizes **clean code, strong fundamentals, interview-oriented problem solving, and consistent practice**.
+This repository emphasizes **clean code, strong fundamentals, interview-oriented problem solving, edge-case awareness, and consistent practice**.
 
 ---
 
@@ -24,14 +24,44 @@ This repository emphasizes **clean code, strong fundamentals, interview-oriented
 
 My regular practice focuses on:
 
-* 1 SQL problem
-* 1 Pandas problem or SQL-to-Pandas recreation
-* Clean query/code formatting
-* Understanding the underlying data operation
-* Reviewing mistakes and edge cases
-* Learning equivalent operations across SQL and Pandas
+* **1 SQL problem per day**
+* Solving the SQL problem independently first
+* Exploring a second SQL approach when it provides useful learning
+* Recreating the same or similar problem in Pandas
+* Testing important edge cases
+* Understanding why the solution works
+* Comparing equivalent SQL and Pandas operations
+* Keeping solutions clean and readable
 
-The goal is **not to solve the maximum number of questions**, but to understand each problem well enough to explain and reproduce the solution independently.
+A typical session looks like:
+
+```text
+1 SQL Problem
+      ↓
+Approach 1
+      ↓
+Verify Result
+      ↓
+Approach 2 — if useful
+      ↓
+Check Edge Cases
+      ↓
+Pandas Recreation
+      ↓
+Review New Concepts
+      ↓
+Stop
+```
+
+The goal is **not to solve the maximum number of questions**.
+
+The goal is to understand each problem well enough to:
+
+* reproduce the solution independently,
+* explain the logic clearly,
+* recognize the underlying pattern,
+* handle edge cases,
+* and apply the same idea to future problems.
 
 ---
 
@@ -43,12 +73,14 @@ sql-pandas-practice/
 ├── sql/
 │   └── 2026/
 │       └── 08/
-│           └── YYYY-MM-DD-problem-name.sql
+│           ├── 2026-08-14-combine-two-tables.sql
+│           └── 2026-08-15-second-highest-salary.sql
 │
 ├── pandas/
 │   └── 2026/
 │       └── 08/
-│           └── YYYY-MM-DD-problem-name.py
+│           ├── 2026-08-14-combine-two-tables.py
+│           └── 2026-08-15-second-highest-salary.py
 │
 └── README.md
 ```
@@ -67,12 +99,16 @@ Technology → Year → Month → Problem
 YYYY-MM-DD-problem-name.extension
 ```
 
-Example:
+Examples:
 
 ```text
 sql/2026/08/2026-08-14-combine-two-tables.sql
 
 pandas/2026/08/2026-08-14-combine-two-tables.py
+
+sql/2026/08/2026-08-15-second-highest-salary.sql
+
+pandas/2026/08/2026-08-15-second-highest-salary.py
 ```
 
 This keeps the repository easy to navigate as the number of solved problems grows over time.
@@ -113,13 +149,18 @@ Topics include:
 * Duplicate Detection
 * Conditional Aggregation
 
-As practice progresses, I also focus on understanding concepts such as **indexes, query execution, and SQL Server execution plans**.
+As practice progresses, I also aim to strengthen my understanding of:
+
+* indexes,
+* query execution,
+* query optimization,
+* and SQL Server execution plans.
 
 ---
 
 ## Pandas Focus
 
-Pandas practice focuses on translating data manipulation requirements into clean Python operations.
+Pandas practice focuses on translating data manipulation requirements into clear Python operations.
 
 Topics include:
 
@@ -131,6 +172,7 @@ Topics include:
 * `sort_values()`
 * `drop_duplicates()`
 * Missing value handling
+* `isna()` / `notna()`
 * Conditional transformations
 * String operations
 * Date/time operations
@@ -139,6 +181,10 @@ Topics include:
 * Reshaping
 * Data cleaning
 * Feature creation
+* `.loc[]`
+* `.iloc[]`
+
+Pandas concepts are learned primarily **through problems when they naturally become useful**, instead of memorizing a large number of methods in isolation.
 
 ---
 
@@ -158,12 +204,16 @@ One major objective of this repository is to develop a strong connection between
 | `COUNT()`      | `count()` / `size()`                 |
 | `SUM()`        | `sum()`                              |
 | `AVG()`        | `mean()`                             |
+| `MAX()`        | `max()`                              |
+| `MIN()`        | `min()`                              |
 | `CASE WHEN`    | Conditional operations               |
 | `IS NULL`      | `isna()`                             |
 | `IS NOT NULL`  | `notna()`                            |
-| `ROW_NUMBER()` | `rank()` / grouping-based operations |
+| Window ranking | `rank()` / grouping-based operations |
 
-The exact Pandas implementation may differ depending on the problem, but understanding this mapping makes it easier to move between **database querying and Python-based data manipulation**.
+The exact Pandas implementation may differ depending on the problem.
+
+The objective is not to force a one-to-one translation, but to understand how the **same data requirement can be expressed in SQL and Python**.
 
 ---
 
@@ -171,13 +221,14 @@ The exact Pandas implementation may differ depending on the problem, but underst
 
 ### SQL
 
-Each SQL solution follows a clean structure such as:
+Each SQL solution uses a consistent header and clean formatting.
 
 ```sql
 -- Problem: Combine Two Tables
 -- Platform: LeetCode
 -- Date: 2026-08-14
 -- Topic: LEFT JOIN
+
 
 SELECT
     p.firstName,
@@ -189,7 +240,48 @@ LEFT JOIN Address AS a
     ON p.personId = a.personId;
 ```
 
+When a problem has multiple useful solutions, they are kept in the same file.
+
+Example:
+
+```sql
+-- Problem: Second Highest Salary
+-- Platform: LeetCode
+-- Date: 2026-08-15
+-- Topic: Subquery / Window Function / Aggregation
+
+
+-- Approach 1: MAX + Subquery
+
+SELECT
+    MAX(salary) AS SecondHighestSalary
+FROM Employee
+WHERE salary < (
+    SELECT MAX(salary)
+    FROM Employee
+);
+
+
+-- Approach 2: DENSE_RANK
+
+SELECT
+    MAX(salary) AS SecondHighestSalary
+FROM (
+    SELECT
+        salary,
+        DENSE_RANK() OVER (
+            ORDER BY salary DESC
+        ) AS ranking
+    FROM Employee
+) AS ranked_salaries
+WHERE ranking = 2;
+```
+
+---
+
 ### Pandas
+
+Each Pandas solution follows the same clean documentation style.
 
 ```python
 """
@@ -198,6 +290,7 @@ Platform: LeetCode
 Date: 2026-08-14
 Topic: Merge / Left Join
 """
+
 
 import pandas as pd
 
@@ -212,8 +305,82 @@ def combine_two_tables(
         on="personId"
     )
 
-    return result[["firstName", "lastName", "city", "state"]]
+    return result[
+        ["firstName", "lastName", "city", "state"]
+    ]
 ```
+
+Another example:
+
+```python
+"""
+Problem: Second Highest Salary
+Platform: LeetCode
+Date: 2026-08-15
+Topic: Filtering / Aggregation
+"""
+
+
+import pandas as pd
+
+
+def second_highest_salary(
+    employee: pd.DataFrame
+) -> pd.DataFrame:
+    max_salary = employee["salary"].max()
+
+    filtered_employee = employee[
+        employee["salary"] < max_salary
+    ]
+
+    second_salary = filtered_employee["salary"].max()
+
+    return pd.DataFrame(
+        [second_salary],
+        columns=["SecondHighestSalary"]
+    )
+```
+
+---
+
+## Edge-Case Practice
+
+A solution is not considered fully understood until important edge cases have been checked.
+
+Examples include:
+
+* empty results,
+* duplicate values,
+* `NULL` values in SQL,
+* `NaN` values in Pandas,
+* multiple rows sharing the same maximum or minimum,
+* missing matches during joins,
+* groups containing only one record,
+* and filters that return no rows.
+
+For example, while solving **Second Highest Salary**, an important distinction is:
+
+```text
+No matching SQL rows + normal SELECT
+→ zero rows
+
+No matching SQL rows + MAX()
+→ NULL
+```
+
+Similarly, in Pandas:
+
+```python
+empty_series.max()
+```
+
+returns:
+
+```text
+NaN
+```
+
+Understanding these behaviors is part of the practice, not just getting the expected answer.
 
 ---
 
@@ -230,6 +397,7 @@ I aim to follow:
 * Clear `JOIN` conditions
 * Proper spacing around operators
 * Semicolons at the end of queries
+* Descriptive approach labels when multiple solutions exist
 * Readability over unnecessarily compressed queries
 
 ### Python / Pandas
@@ -238,10 +406,12 @@ I focus on:
 
 * PEP 8-style formatting
 * Meaningful variable names
-* Readable transformations
+* Type hints where useful
+* Readable DataFrame transformations
 * Minimal unnecessary comments
 * Avoiding overly complex one-liners
-* Understanding the operation instead of memorizing syntax
+* Understanding operations instead of memorizing syntax
+* Writing code that I can explain during an interview
 
 ---
 
@@ -250,17 +420,25 @@ I focus on:
 ```text
 Understand the requirement
         ↓
+Inspect the input structure
+        ↓
 Identify the required data operation
         ↓
-Write the SQL solution
+Write SQL independently
         ↓
 Verify the result
         ↓
-Understand why it works
+Check edge cases
         ↓
-Recreate useful problems in Pandas
+Try another SQL approach when useful
         ↓
-Review formatting and mistakes
+Recreate useful logic in Pandas
+        ↓
+Explore new methods encountered
+        ↓
+Review mistakes
+        ↓
+Commit the solution
 ```
 
 ---
@@ -273,7 +451,7 @@ Problems may come from platforms such as:
 * DataLemur
 * Other SQL and data interview practice resources
 
-The repository contains my own solutions written for learning and interview preparation.
+The repository contains my own solutions written for learning, consistency, and technical interview preparation.
 
 ---
 
@@ -283,17 +461,48 @@ Through consistent practice, I aim to improve my ability to:
 
 * Translate business questions into queries
 * Write SQL without relying on memorized solutions
+* Recognize common SQL problem patterns
 * Choose appropriate joins and aggregations
-* Work confidently with complex SQL queries
-* Manipulate tabular data efficiently using Pandas
+* Use subqueries and window functions confidently
+* Handle duplicates and missing values correctly
+* Identify important edge cases
+* Work confidently with Pandas DataFrames
 * Translate SQL logic into Python
+* Manipulate tabular data efficiently
+* Compare multiple valid approaches
 * Write readable and maintainable code
-* Explain my approach clearly during interviews
+* Explain my reasoning clearly during interviews
+
+---
+
+## Practice Philosophy
+
+This repository follows a **depth-over-volume** approach.
+
+Solving one problem carefully can expose multiple concepts:
+
+```text
+One Problem
+    ↓
+SQL Logic
+    ↓
+Alternative Approach
+    ↓
+Edge Cases
+    ↓
+Pandas Equivalent
+    ↓
+New Methods
+    ↓
+Stronger Pattern Recognition
+```
+
+A problem is valuable not because it increases a solved-question counter, but because it improves the ability to solve the next problem independently.
 
 ---
 
 ## Core Principle
 
-> **Understand the data. Build the logic. Write clean code. Verify the result. Learn from mistakes. Repeat consistently.**
+> **Understand the data. Build the logic. Explore useful alternatives. Handle edge cases. Write clean code. Verify the result. Learn from mistakes. Repeat consistently.**
 
-This repository serves as a record of continuous improvement in **SQL, Pandas, and data problem solving**.
+This repository serves as a long-term record of continuous improvement in **SQL, Pandas, and data problem solving**.
