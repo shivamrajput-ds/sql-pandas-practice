@@ -12,11 +12,11 @@ This repository emphasizes **clean code, strong fundamentals, interview-oriented
 
 ## Tech Stack
 
-* **Microsoft SQL Server / T-SQL**
-* **Python 3**
-* **Pandas**
-* **SQL Server Management Studio (SSMS)**
-* **Google Colab / Jupyter Notebook**
+- **Microsoft SQL Server / T-SQL**
+- **Python 3**
+- **Pandas**
+- **SQL Server Management Studio (SSMS)**
+- **Google Colab / Jupyter Notebook**
 
 ---
 
@@ -24,14 +24,14 @@ This repository emphasizes **clean code, strong fundamentals, interview-oriented
 
 My regular practice focuses on:
 
-* **1 SQL problem per day**
-* Solving the SQL problem independently first
-* Exploring a second SQL approach when it provides useful learning
-* Recreating the same or similar problem in Pandas
-* Testing important edge cases
-* Understanding why the solution works
-* Comparing equivalent SQL and Pandas operations
-* Keeping solutions clean and readable
+- **1 SQL problem per day**
+- Solving the SQL problem independently first
+- Exploring a second SQL approach when it provides useful learning
+- Recreating the same or similar problem in Pandas
+- Testing important edge cases
+- Understanding why the solution works
+- Comparing equivalent SQL and Pandas operations
+- Keeping solutions clean and readable
 
 A typical session looks like:
 
@@ -57,11 +57,11 @@ The goal is **not to solve the maximum number of questions**.
 
 The goal is to understand each problem well enough to:
 
-* reproduce the solution independently,
-* explain the logic clearly,
-* recognize the underlying pattern,
-* handle edge cases,
-* and apply the same idea to future problems.
+- reproduce the solution independently,
+- explain the logic clearly,
+- recognize the underlying pattern,
+- handle edge cases,
+- and apply the same idea to future problems.
 
 ---
 
@@ -74,13 +74,17 @@ sql-pandas-practice/
 │   └── 2026/
 │       └── 08/
 │           ├── 2026-08-14-combine-two-tables.sql
-│           └── 2026-08-15-second-highest-salary.sql
+│           ├── 2026-08-15-second-highest-salary.sql
+│           ├── 2026-08-16-nth-highest-salary.sql
+│           └── 2026-08-17-rank-scores.sql
 │
 ├── pandas/
 │   └── 2026/
 │       └── 08/
 │           ├── 2026-08-14-combine-two-tables.py
-│           └── 2026-08-15-second-highest-salary.py
+│           ├── 2026-08-15-second-highest-salary.py
+│           ├── 2026-08-16-nth-highest-salary.py
+│           └── 2026-08-17-rank-scores.py
 │
 └── README.md
 ```
@@ -103,15 +107,30 @@ Examples:
 
 ```text
 sql/2026/08/2026-08-14-combine-two-tables.sql
-
 pandas/2026/08/2026-08-14-combine-two-tables.py
 
 sql/2026/08/2026-08-15-second-highest-salary.sql
-
 pandas/2026/08/2026-08-15-second-highest-salary.py
+
+sql/2026/08/2026-08-16-nth-highest-salary.sql
+pandas/2026/08/2026-08-16-nth-highest-salary.py
+
+sql/2026/08/2026-08-17-rank-scores.sql
+pandas/2026/08/2026-08-17-rank-scores.py
 ```
 
 This keeps the repository easy to navigate as the number of solved problems grows over time.
+
+---
+
+## Recent Practice
+
+| Date | Problem | SQL Concepts | Pandas Concepts |
+| --- | --- | --- | --- |
+| 2026-08-14 | Combine Two Tables | `LEFT JOIN` | `merge()` |
+| 2026-08-15 | Second Highest Salary | Subquery, `DENSE_RANK()` | Filtering, `max()` |
+| 2026-08-16 | Nth Highest Salary | Scalar function, `DENSE_RANK()` | `drop_duplicates()`, `sort_values()`, `iloc[]` |
+| 2026-08-17 | Rank Scores | `DENSE_RANK()`, correlated subquery | `rank(method="dense")`, `sort_values()` |
 
 ---
 
@@ -121,40 +140,40 @@ SQL solutions are primarily written using **Microsoft SQL Server / T-SQL syntax*
 
 Topics include:
 
-* `SELECT`
-* `DISTINCT`
-* `WHERE`
-* `ORDER BY`
-* Aggregate Functions
-* `GROUP BY`
-* `HAVING`
-* `INNER JOIN`
-* `LEFT JOIN`
-* `RIGHT JOIN`
-* `FULL OUTER JOIN`
-* `CASE`
-* Subqueries
-* Common Table Expressions (CTEs)
-* Self Joins
-* Set Operations
-* Window Functions
-* `ROW_NUMBER()`
-* `RANK()`
-* `DENSE_RANK()`
-* `LEAD()`
-* `LAG()`
-* Date Functions
-* String Functions
-* NULL Handling
-* Duplicate Detection
-* Conditional Aggregation
+- `SELECT`
+- `DISTINCT`
+- `WHERE`
+- `ORDER BY`
+- Aggregate Functions
+- `GROUP BY`
+- `HAVING`
+- `INNER JOIN`
+- `LEFT JOIN`
+- `RIGHT JOIN`
+- `FULL OUTER JOIN`
+- `CASE`
+- Subqueries
+- Common Table Expressions (CTEs)
+- Self Joins
+- Set Operations
+- Window Functions
+- `ROW_NUMBER()`
+- `RANK()`
+- `DENSE_RANK()`
+- `LEAD()`
+- `LAG()`
+- Date Functions
+- String Functions
+- NULL Handling
+- Duplicate Detection
+- Conditional Aggregation
 
 As practice progresses, I also aim to strengthen my understanding of:
 
-* indexes,
-* query execution,
-* query optimization,
-* and SQL Server execution plans.
+- indexes,
+- query execution,
+- query optimization,
+- and SQL Server execution plans.
 
 ---
 
@@ -164,25 +183,25 @@ Pandas practice focuses on translating data manipulation requirements into clear
 
 Topics include:
 
-* DataFrame selection
-* Boolean filtering
-* `merge()`
-* `groupby()`
-* Aggregations
-* `sort_values()`
-* `drop_duplicates()`
-* Missing value handling
-* `isna()` / `notna()`
-* Conditional transformations
-* String operations
-* Date/time operations
-* Ranking
-* Window-like operations
-* Reshaping
-* Data cleaning
-* Feature creation
-* `.loc[]`
-* `.iloc[]`
+- DataFrame selection
+- Boolean filtering
+- `merge()`
+- `groupby()`
+- Aggregations
+- `sort_values()`
+- `drop_duplicates()`
+- Missing value handling
+- `isna()` / `notna()`
+- Conditional transformations
+- String operations
+- Date/time operations
+- Ranking
+- Window-like operations
+- Reshaping
+- Data cleaning
+- Feature creation
+- `.loc[]`
+- `.iloc[]`
 
 Pandas concepts are learned primarily **through problems when they naturally become useful**, instead of memorizing a large number of methods in isolation.
 
@@ -209,7 +228,8 @@ One major objective of this repository is to develop a strong connection between
 | `CASE WHEN`    | Conditional operations               |
 | `IS NULL`      | `isna()`                             |
 | `IS NOT NULL`  | `notna()`                            |
-| Window ranking | `rank()` / grouping-based operations |
+| `DENSE_RANK()` | `rank(method="dense")` |
+| `RANK()` / `ROW_NUMBER()` | `rank()` with the appropriate method / ordering logic |
 
 The exact Pandas implementation may differ depending on the problem.
 
@@ -349,14 +369,14 @@ A solution is not considered fully understood until important edge cases have be
 
 Examples include:
 
-* empty results,
-* duplicate values,
-* `NULL` values in SQL,
-* `NaN` values in Pandas,
-* multiple rows sharing the same maximum or minimum,
-* missing matches during joins,
-* groups containing only one record,
-* and filters that return no rows.
+- empty results,
+- duplicate values,
+- `NULL` values in SQL,
+- `NaN` values in Pandas,
+- multiple rows sharing the same maximum or minimum,
+- missing matches during joins,
+- groups containing only one record,
+- and filters that return no rows.
 
 For example, while solving **Second Highest Salary**, an important distinction is:
 
@@ -390,28 +410,28 @@ Understanding these behaviors is part of the practice, not just getting the expe
 
 I aim to follow:
 
-* Uppercase SQL keywords
-* Consistent indentation
-* One selected column per line when useful
-* Meaningful table aliases
-* Clear `JOIN` conditions
-* Proper spacing around operators
-* Semicolons at the end of queries
-* Descriptive approach labels when multiple solutions exist
-* Readability over unnecessarily compressed queries
+- Uppercase SQL keywords
+- Consistent indentation
+- One selected column per line when useful
+- Meaningful table aliases
+- Clear `JOIN` conditions
+- Proper spacing around operators
+- Semicolons at the end of queries
+- Descriptive approach labels when multiple solutions exist
+- Readability over unnecessarily compressed queries
 
 ### Python / Pandas
 
 I focus on:
 
-* PEP 8-style formatting
-* Meaningful variable names
-* Type hints where useful
-* Readable DataFrame transformations
-* Minimal unnecessary comments
-* Avoiding overly complex one-liners
-* Understanding operations instead of memorizing syntax
-* Writing code that I can explain during an interview
+- PEP 8-style formatting
+- Meaningful variable names
+- Type hints where useful
+- Readable DataFrame transformations
+- Minimal unnecessary comments
+- Avoiding overly complex one-liners
+- Understanding operations instead of memorizing syntax
+- Writing code that I can explain during an interview
 
 ---
 
@@ -447,9 +467,9 @@ Commit the solution
 
 Problems may come from platforms such as:
 
-* LeetCode
-* DataLemur
-* Other SQL and data interview practice resources
+- LeetCode
+- DataLemur
+- Other SQL and data interview practice resources
 
 The repository contains my own solutions written for learning, consistency, and technical interview preparation.
 
@@ -459,19 +479,19 @@ The repository contains my own solutions written for learning, consistency, and 
 
 Through consistent practice, I aim to improve my ability to:
 
-* Translate business questions into queries
-* Write SQL without relying on memorized solutions
-* Recognize common SQL problem patterns
-* Choose appropriate joins and aggregations
-* Use subqueries and window functions confidently
-* Handle duplicates and missing values correctly
-* Identify important edge cases
-* Work confidently with Pandas DataFrames
-* Translate SQL logic into Python
-* Manipulate tabular data efficiently
-* Compare multiple valid approaches
-* Write readable and maintainable code
-* Explain my reasoning clearly during interviews
+- Translate business questions into queries
+- Write SQL without relying on memorized solutions
+- Recognize common SQL problem patterns
+- Choose appropriate joins and aggregations
+- Use subqueries and window functions confidently
+- Handle duplicates and missing values correctly
+- Identify important edge cases
+- Work confidently with Pandas DataFrames
+- Translate SQL logic into Python
+- Manipulate tabular data efficiently
+- Compare multiple valid approaches
+- Write readable and maintainable code
+- Explain my reasoning clearly during interviews
 
 ---
 
