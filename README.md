@@ -76,7 +76,8 @@ sql-pandas-practice/
 │           ├── 2026-08-14-combine-two-tables.sql
 │           ├── 2026-08-15-second-highest-salary.sql
 │           ├── 2026-08-16-nth-highest-salary.sql
-│           └── 2026-08-17-rank-scores.sql
+│           ├── 2026-08-17-rank-scores.sql
+│           └── 2026-08-18-consecutive-numbers.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -84,7 +85,8 @@ sql-pandas-practice/
 │           ├── 2026-08-14-combine-two-tables.py
 │           ├── 2026-08-15-second-highest-salary.py
 │           ├── 2026-08-16-nth-highest-salary.py
-│           └── 2026-08-17-rank-scores.py
+│           ├── 2026-08-17-rank-scores.py
+│           └── 2026-08-18-consecutive-numbers.py
 │
 └── README.md
 ```
@@ -117,6 +119,9 @@ pandas/2026/08/2026-08-16-nth-highest-salary.py
 
 sql/2026/08/2026-08-17-rank-scores.sql
 pandas/2026/08/2026-08-17-rank-scores.py
+
+sql/2026/08/2026-08-18-consecutive-numbers.sql
+pandas/2026/08/2026-08-18-consecutive-numbers.py
 ```
 
 This keeps the repository easy to navigate as the number of solved problems grows over time.
@@ -131,6 +136,7 @@ This keeps the repository easy to navigate as the number of solved problems grow
 | 2026-08-15 | Second Highest Salary | Subquery, `DENSE_RANK()` | Filtering, `max()` |
 | 2026-08-16 | Nth Highest Salary | Scalar function, `DENSE_RANK()` | `drop_duplicates()`, `sort_values()`, `iloc[]` |
 | 2026-08-17 | Rank Scores | `DENSE_RANK()`, correlated subquery | `rank(method="dense")`, `sort_values()` |
+| 2026-08-18 | Consecutive Numbers | `LEAD()`, `LAG()`, self join | `shift()`, boolean filtering, `unique()` |
 
 ---
 
@@ -197,6 +203,7 @@ Topics include:
 - Date/time operations
 - Ranking
 - Window-like operations
+- `shift()` for previous/next-row comparisons
 - Reshaping
 - Data cleaning
 - Feature creation
@@ -230,6 +237,8 @@ One major objective of this repository is to develop a strong connection between
 | `IS NOT NULL`  | `notna()`                            |
 | `DENSE_RANK()` | `rank(method="dense")` |
 | `RANK()` / `ROW_NUMBER()` | `rank()` with the appropriate method / ordering logic |
+| `LAG(column)` | `Series.shift(1)` |
+| `LEAD(column)` | `Series.shift(-1)` |
 
 The exact Pandas implementation may differ depending on the problem.
 
