@@ -6,14 +6,13 @@
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![Focus](https://img.shields.io/badge/Focus-Depth%20over%20Volume-orange?style=flat-square)
 
-A structured practice repository for building strong **SQL + Pandas problem-solving skills** for **Data Science, Analytics, and technical interviews**.
+A structured practice repository for strengthening **SQL and Pandas problem-solving skills** for **Data Science, Analytics, and technical interviews**.
 
-The repository follows one simple rule:
+The core workflow is simple:
 
-> **Solve the data problem independently in SQL first, understand the pattern, explore another SQL approach only when it adds learning value, then recreate the same or similar logic in Pandas.**
+> **Solve the data problem independently in SQL first, understand the pattern, explore another SQL approach only when it adds learning value, and then recreate the same or similar logic in Pandas.**
 
-The focus is not on collecting solved-question counts.  
-The focus is on becoming able to **recognize patterns, build the logic independently, handle edge cases, translate between SQL and Pandas, and explain the solution clearly.**
+The goal is not to maximize the number of solved questions. The goal is to build enough depth to **recognize patterns, reason independently, handle edge cases, translate SQL logic into Pandas, and explain solutions clearly.**
 
 ---
 
@@ -22,18 +21,16 @@ The focus is on becoming able to **recognize patterns, build the logic independe
 | Metric | Current Status |
 | --- | --- |
 | Practice started | 2026-08-14 |
-| Latest entry | 2026-08-23 |
-| Data problems completed | **10** |
-| SQL solutions | **10** |
-| Pandas recreations | **10** |
+| Latest entry | 2026-08-24 |
+| Data problems completed | **11** |
+| SQL solution files | **11** |
+| Pandas recreation files | **11** |
 | Primary SQL dialect | **Microsoft SQL Server / T-SQL** |
-| Practice style | **1 problem per day, depth-first** |
+| Practice style | **1 data problem per day, depth-first** |
 
 ---
 
 ## Practice Method
-
-Each practice session follows this workflow:
 
 ```text
 Understand the problem
@@ -61,7 +58,7 @@ A problem is considered properly completed when I can:
 
 - solve it without copying a memorized answer,
 - explain why the approach works,
-- identify the underlying pattern,
+- recognize the reusable pattern,
 - handle important edge cases,
 - understand the equivalent Pandas operations,
 - and reproduce the logic later with minimal help.
@@ -85,7 +82,8 @@ sql-pandas-practice/
 │           ├── 2026-08-20-duplicate-emails.sql
 │           ├── 2026-08-21-customers-who-never-order.sql
 │           ├── 2026-08-22-department-highest-salary.sql
-│           └── 2026-08-23-department-top-three-salaries.sql
+│           ├── 2026-08-23-department-top-three-salaries.sql
+│           └── 2026-08-24-delete-duplicate-emails.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -99,12 +97,13 @@ sql-pandas-practice/
 │           ├── 2026-08-20-duplicate-emails.py
 │           ├── 2026-08-21-customers-who-never-order.py
 │           ├── 2026-08-22-department-highest-salary.py
-│           └── 2026-08-23-department-top-three-salaries.py
+│           ├── 2026-08-23-department-top-three-salaries.py
+│           └── 2026-08-24-delete-duplicate-emails.py
 │
 └── README.md
 ```
 
-### Naming convention
+### Naming Convention
 
 ```text
 YYYY-MM-DD-problem-name.extension
@@ -113,11 +112,11 @@ YYYY-MM-DD-problem-name.extension
 Example:
 
 ```text
-sql/2026/08/2026-08-23-department-top-three-salaries.sql
-pandas/2026/08/2026-08-23-department-top-three-salaries.py
+sql/2026/08/2026-08-24-delete-duplicate-emails.sql
+pandas/2026/08/2026-08-24-delete-duplicate-emails.py
 ```
 
-This structure keeps the repository chronological, searchable, and easy to scale over long-term practice.
+This keeps the repository chronological, searchable, and easy to scale over long-term practice.
 
 ---
 
@@ -135,12 +134,13 @@ This structure keeps the repository chronological, searchable, and easy to scale
 | 2026-08-21 | Customers Who Never Order | `LEFT JOIN`, anti-join, `IS NULL` | Left `merge()`, `isna()`, filtering, `rename()` |
 | 2026-08-22 | Department Highest Salary | Join, `DENSE_RANK()`, `PARTITION BY` | `merge()`, `groupby()`, `max()`, merge-back |
 | 2026-08-23 | Department Top Three Salaries | Join, `DENSE_RANK()`, partitioned ranking | `merge()`, `groupby()`, `rank(method="dense")`, filtering |
+| 2026-08-24 | Delete Duplicate Emails | `ROW_NUMBER()`, subquery, CTE, `DELETE` | `sort_values()`, `drop_duplicates()`, in-place modification |
 
 ---
 
 ## Patterns Learned
 
-The repository is organized around **reusable data patterns**, not isolated syntax.
+This repository focuses on **reusable problem-solving patterns**, not isolated syntax.
 
 | Pattern | SQL Thinking | Pandas Thinking |
 | --- | --- | --- |
@@ -154,10 +154,11 @@ The repository is organized around **reusable data patterns**, not isolated synt
 | Compare adjacent rows | `LAG()` / `LEAD()` | `shift()` |
 | Rank without gaps | `DENSE_RANK()` | `rank(method="dense")` |
 | Rank with gaps | `RANK()` | `rank(method="min")` |
-| Assign ordered row numbers | `ROW_NUMBER()` | Ordered `groupby().cumcount() + 1` |
+| Assign ordered row numbers | `ROW_NUMBER()` | Ordered `cumcount() + 1` |
 | Find group maximum | `MAX()` / window function | `groupby().max()` |
 | Keep rows matching a group maximum | Window rank / max comparison | Aggregate + merge back |
 | Top-N distinct values per group | `DENSE_RANK()` + filter | Grouped dense rank + filter |
+| Keep one row from each duplicate group | `ROW_NUMBER()` + keep rank 1 | Sort + `drop_duplicates(keep="first")` |
 | Remove duplicate rows | `DISTINCT` | `drop_duplicates()` |
 | Handle missing values | `IS NULL` / `IS NOT NULL` | `isna()` / `notna()` |
 
@@ -185,13 +186,15 @@ The repository is organized around **reusable data patterns**, not isolated synt
 | `IS NOT NULL` | `notna()` |
 | `DENSE_RANK()` | `rank(method="dense")` |
 | `RANK()` | `rank(method="min")` |
-| `ROW_NUMBER()` | `cumcount() + 1` after ordering |
+| `ROW_NUMBER()` | Ordered `cumcount() + 1` |
 | `LAG(column)` | `shift(1)` |
 | `LEAD(column)` | `shift(-1)` |
 | Self join | Self `merge()` |
+| Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `drop_duplicates(keep="first")` |
 
-The goal is **not** to force every SQL statement into a literal one-to-one Pandas translation.  
-The goal is to understand how the **same data requirement** can be expressed naturally in both tools.
+The objective is **not** to force every SQL statement into a literal one-to-one Pandas translation.
+
+The objective is to understand how the **same data requirement** can be expressed naturally in both tools.
 
 ---
 
@@ -199,9 +202,8 @@ The goal is to understand how the **same data requirement** can be expressed nat
 
 Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 
-Current and planned coverage includes:
+### Core Querying
 
-### Core querying
 - `SELECT`
 - `DISTINCT`
 - `WHERE`
@@ -210,6 +212,7 @@ Current and planned coverage includes:
 - NULL handling
 
 ### Joins
+
 - `INNER JOIN`
 - `LEFT JOIN`
 - `RIGHT JOIN`
@@ -218,6 +221,7 @@ Current and planned coverage includes:
 - anti-join patterns
 
 ### Aggregation
+
 - `COUNT()`
 - `SUM()`
 - `AVG()`
@@ -227,15 +231,18 @@ Current and planned coverage includes:
 - `HAVING`
 - conditional aggregation
 
-### Intermediate / advanced querying
+### Intermediate / Advanced Querying
+
 - subqueries
 - correlated subqueries
-- CTEs
+- Common Table Expressions (CTEs)
 - set operations
 - `CASE`
 - scalar functions
+- `DELETE`
 
-### Window functions
+### Window Functions
+
 - `ROW_NUMBER()`
 - `RANK()`
 - `DENSE_RANK()`
@@ -243,7 +250,8 @@ Current and planned coverage includes:
 - `LEAD()`
 - partitioned calculations
 
-### Future depth
+### Future Depth
+
 - indexes
 - query execution
 - execution plans
@@ -256,22 +264,23 @@ Current and planned coverage includes:
 
 Pandas practice develops the ability to translate tabular requirements into readable DataFrame operations.
 
-Current and planned coverage includes:
+### Selection and Filtering
 
-### Selection and filtering
 - column selection
 - boolean masks
 - `.loc[]`
 - `.iloc[]`
 - `query()`
 
-### Combining data
+### Combining Data
+
 - `merge()`
 - left / inner merge patterns
 - self merge
 - merge-back patterns
 
-### Grouping and aggregation
+### Grouping and Aggregation
+
 - `groupby()`
 - `size()`
 - `count()`
@@ -280,27 +289,30 @@ Current and planned coverage includes:
 - `min()`
 - `max()`
 
-### Ranking and row relationships
+### Ranking and Row Relationships
+
 - `rank()`
 - `shift()`
 - `cumcount()`
 - grouped ranking
 - window-like operations
 
-### Data quality and reshaping
+### Data Quality and Transformation
+
 - `duplicated()`
 - `drop_duplicates()`
 - `isna()`
 - `notna()`
 - `rename()`
 - `to_frame()`
-- sorting
+- `sort_values()`
+- in-place modification
 - reshaping
 - string operations
 - date/time operations
 - feature creation
 
-Pandas methods are learned **when a problem naturally requires them**, instead of being memorized in isolation.
+Pandas methods are learned **when a problem naturally requires them**, rather than being memorized in isolation.
 
 ---
 
@@ -316,75 +328,83 @@ Every solution should be:
 - **aware of important edge cases**
 - **free from unnecessary complexity**
 
-### SQL file style
+Multiple SQL approaches are included **only when the alternative teaches a useful pattern or trade-off**.
+
+### Example: SQL
 
 ```sql
--- Problem: Department Top Three Salaries
+-- Problem: Delete Duplicate Emails
 -- Platform: LeetCode
--- Date: 2026-08-23
--- Topic: JOIN / DENSE_RANK / PARTITION BY
+-- Date: 2026-08-24
+-- Topic: ROW_NUMBER / Subquery / CTE / DELETE
 
-SELECT
-    Department,
-    Employee,
-    Salary
-FROM (
+-- Approach 1: Subquery + ROW_NUMBER()
+
+DELETE
+FROM Person
+WHERE id NOT IN (
+    SELECT id
+    FROM (
+        SELECT
+            id,
+            email,
+            ROW_NUMBER() OVER (
+                PARTITION BY email
+                ORDER BY id ASC
+            ) AS rnk
+        FROM Person
+    ) AS ranked_person
+    WHERE rnk = 1
+);
+
+
+-- Approach 2: CTE + ROW_NUMBER()
+
+WITH ranked_person AS (
     SELECT
-        DENSE_RANK() OVER (
-            PARTITION BY d.name
-            ORDER BY e.salary DESC
-        ) AS rnk,
-        e.name AS Employee,
-        e.salary AS Salary,
-        d.name AS Department
-    FROM Employee AS e
-    JOIN Department AS d
-        ON e.departmentId = d.id
-) AS ranked
-WHERE rnk <= 3;
+        id,
+        email,
+        ROW_NUMBER() OVER (
+            PARTITION BY email
+            ORDER BY id ASC
+        ) AS rnk
+    FROM Person
+)
+DELETE
+FROM Person
+WHERE id NOT IN (
+    SELECT id
+    FROM ranked_person
+    WHERE rnk = 1
+);
 ```
 
-### Pandas file style
+### Example: Pandas
 
 ```python
 """
-Problem: Department Top Three Salaries
+Problem: Delete Duplicate Emails
 Platform: LeetCode
-Date: 2026-08-23
-Topic: Merge / GroupBy / Dense Rank / Filtering
+Date: 2026-08-24
+Topic: Sorting / Duplicate Removal / In-place Modification
 """
 
 import pandas as pd
 
 
-def top_three_salaries(
-    employee: pd.DataFrame,
-    department: pd.DataFrame
-) -> pd.DataFrame:
-
-    merged = employee.merge(
-        department,
-        left_on="departmentId",
-        right_on="id",
-        how="inner"
+def delete_duplicate_emails(person: pd.DataFrame) -> None:
+    person.sort_values(
+        "id",
+        ascending=True,
+        inplace=True
     )
 
-    merged["rank"] = (
-        merged.groupby("name_y")["salary"]
-        .rank(method="dense", ascending=False)
+    person.drop_duplicates(
+        subset=["email"],
+        keep="first",
+        inplace=True
     )
-
-    result = merged.loc[
-        merged["rank"] <= 3,
-        ["name_y", "name_x", "salary"]
-    ].copy()
-
-    result.columns = ["Department", "Employee", "Salary"]
-
-    return result
 ```
-
-Multiple SQL approaches are included **only when the alternative teaches a useful pattern or trade-off**.
 
 ---
 
@@ -401,6 +421,7 @@ Before considering a solution complete, I check cases such as:
 - groups with a single row,
 - multiple rows sharing the same maximum or minimum,
 - fewer than N values in Top-N problems,
+- duplicate groups where only the minimum `id` should survive,
 - filters that return no rows.
 
 Example:
@@ -438,7 +459,7 @@ Knowing these behaviors is part of understanding the problem.
 - Meaningful aliases
 - Explicit join conditions
 - Readable window functions
-- Semicolons at the end of queries
+- Semicolons at statement boundaries
 - Clear approach labels when multiple solutions are useful
 - Readability over clever but unnecessary compression
 
@@ -458,7 +479,7 @@ Knowing these behaviors is part of understanding the problem.
 
 This repository is intended to strengthen my ability to:
 
-- translate business/data requirements into queries,
+- translate business and data requirements into queries,
 - write SQL independently,
 - recognize reusable SQL patterns,
 - choose the correct join or aggregation strategy,
@@ -495,7 +516,7 @@ Pattern Recognition
 Stronger Problem Solving
 ```
 
-A problem is valuable not because it increases a counter, but because it makes the **next unfamiliar problem easier to solve independently**.
+A problem is valuable not because it increases a solved-question counter, but because it makes the **next unfamiliar problem easier to solve independently**.
 
 ---
 
