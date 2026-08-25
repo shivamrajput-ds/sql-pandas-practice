@@ -21,10 +21,10 @@ The goal is not to maximize the number of solved questions. The goal is to build
 | Metric | Current Status |
 | --- | --- |
 | Practice started | 2026-08-14 |
-| Latest entry | 2026-08-24 |
-| Data problems completed | **11** |
-| SQL solution files | **11** |
-| Pandas recreation files | **11** |
+| Latest entry | 2026-08-25 |
+| Data problems completed | **12** |
+| SQL solution files | **12** |
+| Pandas recreation files | **12** |
 | Primary SQL dialect | **Microsoft SQL Server / T-SQL** |
 | Practice style | **1 data problem per day, depth-first** |
 
@@ -83,7 +83,8 @@ sql-pandas-practice/
 │           ├── 2026-08-21-customers-who-never-order.sql
 │           ├── 2026-08-22-department-highest-salary.sql
 │           ├── 2026-08-23-department-top-three-salaries.sql
-│           └── 2026-08-24-delete-duplicate-emails.sql
+│           ├── 2026-08-24-delete-duplicate-emails.sql
+│           └── 2026-08-25-trips-and-users.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -98,7 +99,8 @@ sql-pandas-practice/
 │           ├── 2026-08-21-customers-who-never-order.py
 │           ├── 2026-08-22-department-highest-salary.py
 │           ├── 2026-08-23-department-top-three-salaries.py
-│           └── 2026-08-24-delete-duplicate-emails.py
+│           ├── 2026-08-24-delete-duplicate-emails.py
+│           └── 2026-08-25-trips-and-users.py
 │
 └── README.md
 ```
@@ -112,8 +114,8 @@ YYYY-MM-DD-problem-name.extension
 Example:
 
 ```text
-sql/2026/08/2026-08-24-delete-duplicate-emails.sql
-pandas/2026/08/2026-08-24-delete-duplicate-emails.py
+sql/2026/08/2026-08-25-trips-and-users.sql
+pandas/2026/08/2026-08-25-trips-and-users.py
 ```
 
 This keeps the repository chronological, searchable, and easy to scale over long-term practice.
@@ -135,6 +137,7 @@ This keeps the repository chronological, searchable, and easy to scale over long
 | 2026-08-22 | Department Highest Salary | Join, `DENSE_RANK()`, `PARTITION BY` | `merge()`, `groupby()`, `max()`, merge-back |
 | 2026-08-23 | Department Top Three Salaries | Join, `DENSE_RANK()`, partitioned ranking | `merge()`, `groupby()`, `rank(method="dense")`, filtering |
 | 2026-08-24 | Delete Duplicate Emails | `ROW_NUMBER()`, subquery, CTE, `DELETE` | `sort_values()`, `drop_duplicates()`, in-place modification |
+| 2026-08-25 | Trips and Users | CTE, double join, conditional aggregation, `CASE`, date filtering | Double `merge()`, filtering, `groupby()`, `fillna()`, rate calculation |
 
 ---
 
@@ -148,6 +151,7 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | Find unmatched rows | `LEFT JOIN` + `IS NULL` | Left merge + `isna()` |
 | Match only common rows | `INNER JOIN` | `merge(..., how="inner")` |
 | Compare rows in the same table | Self join | Self `merge()` |
+| Join one lookup table for multiple roles | Join same table with separate aliases | Merge same DataFrame multiple times with suffixes |
 | Detect duplicate values | `GROUP BY` + `HAVING COUNT(*) > 1` | `groupby()` / `duplicated()` |
 | Aggregate by group | `GROUP BY` | `groupby()` |
 | Filter aggregated results | `HAVING` | Aggregate, then filter |
@@ -159,6 +163,9 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | Keep rows matching a group maximum | Window rank / max comparison | Aggregate + merge back |
 | Top-N distinct values per group | `DENSE_RANK()` + filter | Grouped dense rank + filter |
 | Keep one row from each duplicate group | `ROW_NUMBER()` + keep rank 1 | Sort + `drop_duplicates(keep="first")` |
+| Conditional counting | `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` | Boolean filter + grouped count |
+| Preserve zero-count groups | Conditional aggregation / outer join | Left merge + `fillna(0)` |
+| Calculate ratios safely | Decimal conversion + division | Numeric division + `round()` |
 | Remove duplicate rows | `DISTINCT` | `drop_duplicates()` |
 | Handle missing values | `IS NULL` / `IS NOT NULL` | `isna()` / `notna()` |
 
@@ -181,7 +188,7 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `AVG()` | `mean()` |
 | `MAX()` | `max()` |
 | `MIN()` | `min()` |
-| `CASE WHEN` | Conditional assignment / masking |
+| `CASE WHEN` | Boolean masks / conditional assignment |
 | `IS NULL` | `isna()` |
 | `IS NOT NULL` | `notna()` |
 | `DENSE_RANK()` | `rank(method="dense")` |
@@ -190,7 +197,10 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `LAG(column)` | `shift(1)` |
 | `LEAD(column)` | `shift(-1)` |
 | Self join | Self `merge()` |
+| Multiple aliases of same table | Multiple merges + suffixes |
 | Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `drop_duplicates(keep="first")` |
+| Conditional aggregation | `SUM(CASE...)` | Filter / mask + grouped aggregation |
+| Replace missing aggregate with zero | `COALESCE()` | `fillna(0)` |
 
 The objective is **not** to force every SQL statement into a literal one-to-one Pandas translation.
 
@@ -209,6 +219,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `WHERE`
 - `ORDER BY`
 - aliases
+- date filtering
 - NULL handling
 
 ### Joins
@@ -219,6 +230,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `FULL OUTER JOIN`
 - self joins
 - anti-join patterns
+- multiple joins to the same lookup table
 
 ### Aggregation
 
@@ -230,6 +242,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `GROUP BY`
 - `HAVING`
 - conditional aggregation
+- grouped ratios
 
 ### Intermediate / Advanced Querying
 
@@ -271,12 +284,15 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `.loc[]`
 - `.iloc[]`
 - `query()`
+- date-range filtering
 
 ### Combining Data
 
 - `merge()`
 - left / inner merge patterns
 - self merge
+- repeated merges against the same lookup DataFrame
+- suffix handling
 - merge-back patterns
 
 ### Grouping and Aggregation
@@ -288,6 +304,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `mean()`
 - `min()`
 - `max()`
+- ratio calculations
 
 ### Ranking and Row Relationships
 
@@ -303,6 +320,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `drop_duplicates()`
 - `isna()`
 - `notna()`
+- `fillna()`
 - `rename()`
 - `to_frame()`
 - `sort_values()`
@@ -333,77 +351,115 @@ Multiple SQL approaches are included **only when the alternative teaches a usefu
 ### Example: SQL
 
 ```sql
--- Problem: Delete Duplicate Emails
+-- Problem: Trips and Users
 -- Platform: LeetCode
--- Date: 2026-08-24
--- Topic: ROW_NUMBER / Subquery / CTE / DELETE
+-- Date: 2026-08-25
+-- Topic: CTE / JOIN / Conditional Aggregation / CASE / GROUP BY
 
--- Approach 1: Subquery + ROW_NUMBER()
-
-DELETE
-FROM Person
-WHERE id NOT IN (
-    SELECT id
-    FROM (
-        SELECT
-            id,
-            email,
-            ROW_NUMBER() OVER (
-                PARTITION BY email
-                ORDER BY id ASC
-            ) AS rnk
-        FROM Person
-    ) AS ranked_person
-    WHERE rnk = 1
-);
-
-
--- Approach 2: CTE + ROW_NUMBER()
-
-WITH ranked_person AS (
+;WITH table1 AS (
     SELECT
-        id,
-        email,
-        ROW_NUMBER() OVER (
-            PARTITION BY email
-            ORDER BY id ASC
-        ) AS rnk
-    FROM Person
+        t.request_at AS [Day],
+        COUNT(*) AS unbanned_req,
+        SUM(
+            CASE
+                WHEN t.status <> 'completed' THEN 1
+                ELSE 0
+            END
+        ) AS cancelled_req
+    FROM Trips AS t
+    LEFT JOIN Users AS c
+        ON t.client_id = c.users_id
+    LEFT JOIN Users AS d
+        ON t.driver_id = d.users_id
+    WHERE t.request_at BETWEEN '2013-10-01' AND '2013-10-03'
+      AND c.banned = 'No'
+      AND d.banned = 'No'
+    GROUP BY t.request_at
 )
-DELETE
-FROM Person
-WHERE id NOT IN (
-    SELECT id
-    FROM ranked_person
-    WHERE rnk = 1
-);
+
+SELECT
+    [Day],
+    ROUND(
+        1.0 * cancelled_req / unbanned_req,
+        2
+    ) AS [Cancellation Rate]
+FROM table1;
 ```
 
 ### Example: Pandas
 
 ```python
 """
-Problem: Delete Duplicate Emails
+Problem: Trips and Users
 Platform: LeetCode
-Date: 2026-08-24
-Topic: Sorting / Duplicate Removal / In-place Modification
+Date: 2026-08-25
+Topic: Merge / Filtering / GroupBy / Aggregation / Missing Values
 """
 
 import pandas as pd
 
 
-def delete_duplicate_emails(person: pd.DataFrame) -> None:
-    person.sort_values(
-        "id",
-        ascending=True,
-        inplace=True
+def trips_and_users(
+    trips: pd.DataFrame,
+    users: pd.DataFrame
+) -> pd.DataFrame:
+
+    trips = trips[
+        (trips["request_at"] >= "2013-10-01")
+        & (trips["request_at"] <= "2013-10-03")
+    ]
+
+    res = pd.merge(
+        trips,
+        users[["users_id", "banned"]],
+        left_on="client_id",
+        right_on="users_id",
+        how="left"
     )
 
-    person.drop_duplicates(
-        subset=["email"],
-        keep="first",
-        inplace=True
+    res = pd.merge(
+        res,
+        users[["users_id", "banned"]],
+        left_on="driver_id",
+        right_on="users_id",
+        how="left",
+        suffixes=("_client", "_driver")
     )
+
+    res = res[
+        (res["banned_client"] == "No")
+        & (res["banned_driver"] == "No")
+    ]
+
+    ans1 = (
+        res.groupby("request_at")["id"]
+        .count()
+        .reset_index(name="total_request")
+    )
+
+    ans2 = (
+        res[res["status"] != "completed"]
+        .groupby("request_at")["id"]
+        .count()
+        .reset_index(name="cancelled_request")
+    )
+
+    data = pd.merge(
+        ans1,
+        ans2,
+        on="request_at",
+        how="left"
+    )
+
+    data["cancelled_request"] = data["cancelled_request"].fillna(0)
+
+    data["Cancellation Rate"] = (
+        data["cancelled_request"] / data["total_request"]
+    ).round(2)
+
+    data = data.rename(columns={"request_at": "Day"})
+
+    return data[["Day", "Cancellation Rate"]]
 ```
 
 ---
@@ -422,9 +478,32 @@ Before considering a solution complete, I check cases such as:
 - multiple rows sharing the same maximum or minimum,
 - fewer than N values in Top-N problems,
 - duplicate groups where only the minimum `id` should survive,
+- days or groups with zero matching events,
+- integer division when a decimal result is required,
 - filters that return no rows.
 
-Example:
+### Example: Missing aggregate rows
+
+A useful lesson from cancellation-rate style problems:
+
+```text
+A day can have valid trips
+but zero cancelled trips.
+```
+
+If the cancelled subset is grouped separately, that day may disappear completely.
+
+In Pandas:
+
+```python
+left_merge + fillna(0)
+```
+
+can preserve the day and restore the missing cancellation count as zero.
+
+In SQL, conditional aggregation can avoid creating a separate missing group in the first place.
+
+### Example: Empty aggregate behavior
 
 ```text
 Normal SELECT with no matching rows
@@ -459,6 +538,7 @@ Knowing these behaviors is part of understanding the problem.
 - Meaningful aliases
 - Explicit join conditions
 - Readable window functions
+- Clear conditional aggregation
 - Semicolons at statement boundaries
 - Clear approach labels when multiple solutions are useful
 - Readability over clever but unnecessary compression
@@ -484,8 +564,9 @@ This repository is intended to strengthen my ability to:
 - recognize reusable SQL patterns,
 - choose the correct join or aggregation strategy,
 - use window functions confidently,
-- handle duplicates and missing data correctly,
-- reason about edge cases,
+- use conditional aggregation correctly,
+- handle duplicates and missing data,
+- reason about zero-count and empty-result cases,
 - manipulate DataFrames confidently,
 - translate SQL logic into Pandas,
 - compare multiple valid approaches when useful,
