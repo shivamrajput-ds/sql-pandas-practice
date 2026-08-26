@@ -21,10 +21,10 @@ The goal is not to maximize the number of solved questions. The goal is to build
 | Metric | Current Status |
 | --- | --- |
 | Practice started | 2026-08-14 |
-| Latest entry | 2026-08-25 |
-| Data problems completed | **12** |
-| SQL solution files | **12** |
-| Pandas recreation files | **12** |
+| Latest entry | 2026-08-26 |
+| Data problems completed | **13** |
+| SQL solution files | **13** |
+| Pandas recreation files | **13** |
 | Primary SQL dialect | **Microsoft SQL Server / T-SQL** |
 | Practice style | **1 data problem per day, depth-first** |
 
@@ -84,7 +84,8 @@ sql-pandas-practice/
 │           ├── 2026-08-22-department-highest-salary.sql
 │           ├── 2026-08-23-department-top-three-salaries.sql
 │           ├── 2026-08-24-delete-duplicate-emails.sql
-│           └── 2026-08-25-trips-and-users.sql
+│           ├── 2026-08-25-trips-and-users.sql
+│           └── 2026-08-26-game-play-analysis-i.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -100,7 +101,8 @@ sql-pandas-practice/
 │           ├── 2026-08-22-department-highest-salary.py
 │           ├── 2026-08-23-department-top-three-salaries.py
 │           ├── 2026-08-24-delete-duplicate-emails.py
-│           └── 2026-08-25-trips-and-users.py
+│           ├── 2026-08-25-trips-and-users.py
+│           └── 2026-08-26-game-play-analysis-i.py
 │
 └── README.md
 ```
@@ -114,8 +116,8 @@ YYYY-MM-DD-problem-name.extension
 Example:
 
 ```text
-sql/2026/08/2026-08-25-trips-and-users.sql
-pandas/2026/08/2026-08-25-trips-and-users.py
+sql/2026/08/2026-08-26-game-play-analysis-i.sql
+pandas/2026/08/2026-08-26-game-play-analysis-i.py
 ```
 
 This keeps the repository chronological, searchable, and easy to scale over long-term practice.
@@ -138,6 +140,7 @@ This keeps the repository chronological, searchable, and easy to scale over long
 | 2026-08-23 | Department Top Three Salaries | Join, `DENSE_RANK()`, partitioned ranking | `merge()`, `groupby()`, `rank(method="dense")`, filtering |
 | 2026-08-24 | Delete Duplicate Emails | `ROW_NUMBER()`, subquery, CTE, `DELETE` | `sort_values()`, `drop_duplicates()`, in-place modification |
 | 2026-08-25 | Trips and Users | CTE, double join, conditional aggregation, `CASE`, date filtering | Double `merge()`, filtering, `groupby()`, `fillna()`, rate calculation |
+| 2026-08-26 | Game Play Analysis I | `GROUP BY`, `MIN()`, `ROW_NUMBER()` | `groupby().min()`, `sort_values()`, `cumcount()` |
 
 ---
 
@@ -155,6 +158,8 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | Detect duplicate values | `GROUP BY` + `HAVING COUNT(*) > 1` | `groupby()` / `duplicated()` |
 | Aggregate by group | `GROUP BY` | `groupby()` |
 | Filter aggregated results | `HAVING` | Aggregate, then filter |
+| Find earliest value in a group | `MIN()` | `groupby().min()` |
+| Keep the first ordered row per group | `ROW_NUMBER()` + rank 1 | Sort + `cumcount() + 1` |
 | Compare adjacent rows | `LAG()` / `LEAD()` | `shift()` |
 | Rank without gaps | `DENSE_RANK()` | `rank(method="dense")` |
 | Rank with gaps | `RANK()` | `rank(method="min")` |
@@ -198,7 +203,8 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `LEAD(column)` | `shift(-1)` |
 | Self join | Self `merge()` |
 | Multiple aliases of same table | Multiple merges + suffixes |
-| Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `drop_duplicates(keep="first")` |
+| First value per group | `MIN()` or `ROW_NUMBER()` | `groupby().min()` or sort + `cumcount()` |
+| Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `cumcount()` / `drop_duplicates()` |
 | Conditional aggregation | `SUM(CASE...)` | Filter / mask + grouped aggregation |
 | Replace missing aggregate with zero | `COALESCE()` | `fillna(0)` |
 
@@ -262,6 +268,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `LAG()`
 - `LEAD()`
 - partitioned calculations
+- first-row-per-group patterns
 
 ### Future Depth
 
@@ -312,6 +319,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `shift()`
 - `cumcount()`
 - grouped ranking
+- first-row-per-group logic
 - window-like operations
 
 ### Data Quality and Transformation
@@ -351,116 +359,90 @@ Multiple SQL approaches are included **only when the alternative teaches a usefu
 ### Example: SQL
 
 ```sql
--- Problem: Trips and Users
+-- Problem: Game Play Analysis I
 -- Platform: LeetCode
--- Date: 2026-08-25
--- Topic: CTE / JOIN / Conditional Aggregation / CASE / GROUP BY
+-- Date: 2026-08-26
+-- Topic: GROUP BY / MIN / ROW_NUMBER / Window Function
 
-;WITH table1 AS (
-    SELECT
-        t.request_at AS [Day],
-        COUNT(*) AS unbanned_req,
-        SUM(
-            CASE
-                WHEN t.status <> 'completed' THEN 1
-                ELSE 0
-            END
-        ) AS cancelled_req
-    FROM Trips AS t
-    LEFT JOIN Users AS c
-        ON t.client_id = c.users_id
-    LEFT JOIN Users AS d
-        ON t.driver_id = d.users_id
-    WHERE t.request_at BETWEEN '2013-10-01' AND '2013-10-03'
-      AND c.banned = 'No'
-      AND d.banned = 'No'
-    GROUP BY t.request_at
-)
+-- Approach 1: GROUP BY + MIN()
 
 SELECT
-    [Day],
-    ROUND(
-        1.0 * cancelled_req / unbanned_req,
-        2
-    ) AS [Cancellation Rate]
-FROM table1;
+    player_id,
+    MIN(event_date) AS first_login
+FROM Activity
+GROUP BY player_id;
+
+
+-- Approach 2: ROW_NUMBER()
+
+SELECT
+    player_id,
+    event_date AS first_login
+FROM (
+    SELECT
+        player_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY player_id
+            ORDER BY event_date ASC
+        ) AS rnk,
+        event_date
+    FROM Activity
+) AS ranked
+WHERE rnk = 1;
 ```
 
 ### Example: Pandas
 
 ```python
 """
-Problem: Trips and Users
+Problem: Game Play Analysis I
 Platform: LeetCode
-Date: 2026-08-25
-Topic: Merge / Filtering / GroupBy / Aggregation / Missing Values
+Date: 2026-08-26
+Topic: GroupBy / Min / Sorting / CumCount
 """
 
 import pandas as pd
 
 
-def trips_and_users(
-    trips: pd.DataFrame,
-    users: pd.DataFrame
-) -> pd.DataFrame:
+# Approach 1: groupby() + min()
 
-    trips = trips[
-        (trips["request_at"] >= "2013-10-01")
-        & (trips["request_at"] <= "2013-10-03")
-    ]
+def game_analysis_groupby(activity: pd.DataFrame) -> pd.DataFrame:
+    res = activity.groupby("player_id")["event_date"].min()
+    res = res.reset_index()
+    res = res.rename(columns={"event_date": "first_login"})
 
-    res = pd.merge(
-        trips,
-        users[["users_id", "banned"]],
-        left_on="client_id",
-        right_on="users_id",
-        how="left"
+    return res
+
+
+# Approach 2: sort_values() + groupby().cumcount()
+
+def game_analysis_row_number(activity: pd.DataFrame) -> pd.DataFrame:
+    res = activity.sort_values(["player_id", "event_date"])
+
+    res["rank"] = (
+        res.groupby("player_id").cumcount() + 1
     )
 
-    res = pd.merge(
-        res,
-        users[["users_id", "banned"]],
-        left_on="driver_id",
-        right_on="users_id",
-        how="left",
-        suffixes=("_client", "_driver")
-    )
+    res = res[res["rank"] == 1]
+    res = res[["player_id", "event_date"]]
+    res = res.rename(columns={"event_date": "first_login"})
 
-    res = res[
-        (res["banned_client"] == "No")
-        & (res["banned_driver"] == "No")
-    ]
-
-    ans1 = (
-        res.groupby("request_at")["id"]
-        .count()
-        .reset_index(name="total_request")
-    )
-
-    ans2 = (
-        res[res["status"] != "completed"]
-        .groupby("request_at")["id"]
-        .count()
-        .reset_index(name="cancelled_request")
-    )
-
-    data = pd.merge(
-        ans1,
-        ans2,
-        on="request_at",
-        how="left"
-    )
-
-    data["cancelled_request"] = data["cancelled_request"].fillna(0)
-
-    data["Cancellation Rate"] = (
-        data["cancelled_request"] / data["total_request"]
-    ).round(2)
-
-    data = data.rename(columns={"request_at": "Day"})
-
-    return data[["Day", "Cancellation Rate"]]
+    return res
 ```
+
+### Choosing between multiple approaches
+
+For **Game Play Analysis I**:
+
+```text
+Need only the earliest date
+→ GROUP BY + MIN() is simpler
+
+Need the complete first row
+→ ROW_NUMBER() / sort + cumcount() is more flexible
+```
+
+The important skill is not collecting approaches. It is understanding **when each approach is useful**.
 
 ---
 
@@ -476,47 +458,64 @@ Before considering a solution complete, I check cases such as:
 - missing join matches,
 - groups with a single row,
 - multiple rows sharing the same maximum or minimum,
+- multiple events occurring on the same earliest date,
 - fewer than N values in Top-N problems,
 - duplicate groups where only the minimum `id` should survive,
 - days or groups with zero matching events,
 - integer division when a decimal result is required,
 - filters that return no rows.
 
-### Example: Missing aggregate rows
+### First-value vs first-row thinking
 
-A useful lesson from cancellation-rate style problems:
+A useful distinction:
 
 ```text
-A day can have valid trips
-but zero cancelled trips.
+Need only the minimum value
+→ aggregate with MIN()
+
+Need columns from the row containing that minimum value
+→ rank/order rows and keep row 1
 ```
 
-If the cancelled subset is grouped separately, that day may disappear completely.
+This distinction applies in both SQL and Pandas.
+
+### Missing aggregate rows
+
+```text
+A group can exist
+but have zero matching rows in a filtered subset.
+```
 
 In Pandas:
 
 ```python
-left_merge + fillna(0)
+left merge + fillna(0)
 ```
 
-can preserve the day and restore the missing cancellation count as zero.
+can preserve the group.
 
-In SQL, conditional aggregation can avoid creating a separate missing group in the first place.
+In SQL, conditional aggregation can often keep the group in a single query.
 
-### Example: Empty aggregate behavior
+### Empty aggregate behavior
 
 ```text
 Normal SELECT with no matching rows
 → zero rows
 
-MAX() over no matching rows
+MAX() / MIN() over no matching rows
 → one row containing NULL
 ```
 
-Pandas equivalent:
+Pandas:
 
 ```python
 empty_series.max()
+```
+
+or:
+
+```python
+empty_series.min()
 ```
 
 returns:
@@ -541,7 +540,7 @@ Knowing these behaviors is part of understanding the problem.
 - Clear conditional aggregation
 - Semicolons at statement boundaries
 - Clear approach labels when multiple solutions are useful
-- Readability over clever but unnecessary compression
+- Prefer the simplest correct solution when extra complexity adds no value
 
 ### Python / Pandas
 
@@ -551,6 +550,7 @@ Knowing these behaviors is part of understanding the problem.
 - Readable transformations
 - Minimal unnecessary comments
 - Avoid overly complex one-liners
+- Keep transformations aligned with the underlying data logic
 - Prefer code that can be clearly explained in an interview
 
 ---
@@ -564,12 +564,14 @@ This repository is intended to strengthen my ability to:
 - recognize reusable SQL patterns,
 - choose the correct join or aggregation strategy,
 - use window functions confidently,
+- distinguish value-level aggregation from row-level selection,
 - use conditional aggregation correctly,
 - handle duplicates and missing data,
 - reason about zero-count and empty-result cases,
 - manipulate DataFrames confidently,
 - translate SQL logic into Pandas,
 - compare multiple valid approaches when useful,
+- choose the simplest appropriate approach,
 - write maintainable data code,
 - and explain my reasoning clearly in technical interviews.
 
