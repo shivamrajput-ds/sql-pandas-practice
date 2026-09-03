@@ -21,10 +21,10 @@ The goal is not to maximize the number of solved questions. The goal is to build
 | Metric | Current Status |
 | --- | --- |
 | Practice started | 2026-08-14 |
-| Latest entry | 2026-09-02 |
-| Data problems completed | **16** |
-| SQL solution files | **16** |
-| Pandas recreation files | **16** |
+| Latest entry | 2026-09-03 |
+| Data problems completed | **17** |
+| SQL solution files | **17** |
+| Pandas recreation files | **17** |
 | Primary SQL dialect | **Microsoft SQL Server / T-SQL** |
 | Practice style | **1 data problem per practice day, depth-first** |
 
@@ -90,7 +90,8 @@ sql-pandas-practice/
 │       │
 │       └── 09/
 │           ├── 2026-09-01-big-countries.sql
-│           └── 2026-09-02-game-play-analysis-iv.sql
+│           ├── 2026-09-02-game-play-analysis-iv.sql
+│           └── 2026-09-03-managers-with-at-least-5-direct-reports.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -112,7 +113,8 @@ sql-pandas-practice/
 │       │
 │       └── 09/
 │           ├── 2026-09-01-big-countries.py
-│           └── 2026-09-02-game-play-analysis-iv.py
+│           ├── 2026-09-02-game-play-analysis-iv.py
+│           └── 2026-09-03-managers-with-at-least-5-direct-reports.py
 │
 └── README.md
 ```
@@ -123,11 +125,11 @@ sql-pandas-practice/
 YYYY-MM-DD-problem-name.extension
 ```
 
-Examples:
+Example:
 
 ```text
-sql/2026/09/2026-09-02-game-play-analysis-iv.sql
-pandas/2026/09/2026-09-02-game-play-analysis-iv.py
+sql/2026/09/2026-09-03-managers-with-at-least-5-direct-reports.sql
+pandas/2026/09/2026-09-03-managers-with-at-least-5-direct-reports.py
 ```
 
 This keeps the repository chronological, searchable, and easy to scale over long-term practice.
@@ -154,16 +156,83 @@ This keeps the repository chronological, searchable, and easy to scale over long
 | 2026-08-31 | Rising Temperature | Self join, `LAG()`, `DATEDIFF()` | `sort_values()`, `shift()`, `Timedelta`, boolean filtering |
 | 2026-09-01 | Big Countries | `WHERE`, `OR`, filtering | `query()`, boolean filtering, column selection |
 | 2026-09-02 | Game Play Analysis IV | CTE, `MIN()`, join, `DATEDIFF()`, ratio calculation | `nunique()`, `groupby().min()`, `merge()`, `Timedelta`, boolean mask |
+| 2026-09-03 | Managers with at Least 5 Direct Reports | `IN`, `GROUP BY`, `HAVING`, self join | Self `merge()`, `groupby()`, `count()`, `query()`, `isin()` |
 
 ---
 
 ## Recent Learning Highlights
 
+### Managers with at Least 5 Direct Reports
+
+This problem reinforced how a **hierarchical relationship stored inside one table** can be solved in more than one useful way.
+
+Two SQL approaches were practiced.
+
+#### Approach 1 — Group manager IDs directly
+
+```text
+Employee rows
+    ↓
+GROUP BY managerId
+    ↓
+HAVING COUNT(*) >= 5
+    ↓
+Use those IDs to retrieve manager names
+```
+
+The key SQL pattern is:
+
+```sql
+WHERE id IN (
+    SELECT managerId
+    FROM Employee
+    GROUP BY managerId
+    HAVING COUNT(*) >= 5
+)
+```
+
+This is the simpler approach when the table already stores the manager identifier directly.
+
+#### Approach 2 — Self Join
+
+The same table can represent two roles:
+
+```text
+m = manager
+e = employee / direct report
+```
+
+Relationship:
+
+```text
+m.id = e.managerId
+```
+
+After the self join, grouping by the manager ID counts the number of employees reporting directly to each manager.
+
+The Pandas recreation follows the same self-join idea:
+
+```text
+self merge
+    ↓
+group by manager id
+    ↓
+count direct reports
+    ↓
+query count >= 5
+    ↓
+isin() to retrieve manager names
+```
+
+Important reusable lesson:
+
+> **When one table contains a parent-child or manager-employee relationship, self join / self merge is a reusable pattern for connecting the two roles.**
+
+---
+
 ### Game Play Analysis IV
 
 This problem combined multiple concepts into one compact retention-style calculation.
-
-The reusable thinking was:
 
 ```text
 Find each player's first login
@@ -207,7 +276,7 @@ round()
 
 ### Big Countries
 
-This problem reinforced a very simple but important pattern:
+This problem reinforced a simple but important pattern:
 
 ```text
 Filter rows
@@ -227,7 +296,7 @@ Pandas:
 df.query("condition1 or condition2")[["col1", "col2", "col3"]]
 ```
 
-The lesson is that not every problem needs a complex approach. The simplest correct operation is often the best one.
+Not every problem needs a complex approach. The simplest correct operation is often the best one.
 
 ---
 
@@ -250,7 +319,7 @@ A row can be previous after sorting without being exactly one day earlier.
 Therefore:
 
 ```text
-SQL
+SQL:
 LAG() / self join
 +
 DATEDIFF(...)=1
@@ -259,7 +328,7 @@ DATEDIFF(...)=1
 and:
 
 ```text
-Pandas
+Pandas:
 shift(1)
 +
 datetime subtraction == pd.Timedelta(days=1)
@@ -279,10 +348,13 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | Find unmatched rows | `LEFT JOIN` + `IS NULL` | Left merge + `isna()` |
 | Match only common rows | `INNER JOIN` | `merge(..., how="inner")` |
 | Compare rows in the same table | Self join | Self `merge()` |
+| Model parent-child relationships in one table | Self join using parent/child keys | Self merge using `left_on` / `right_on` |
 | Join one lookup table for multiple roles | Join same table with separate aliases | Merge same DataFrame multiple times with suffixes |
 | Detect duplicate values | `GROUP BY` + `HAVING COUNT(*) > 1` | `groupby()` / `duplicated()` |
 | Aggregate by group | `GROUP BY` | `groupby()` |
-| Filter aggregated results | `HAVING` | Aggregate, then filter |
+| Filter aggregated results | `HAVING` | Aggregate, then filter / `query()` |
+| Find groups meeting a minimum count | `GROUP BY` + `HAVING COUNT(*) >= N` | `groupby().count()` + filter |
+| Filter rows using a derived set of IDs | `WHERE ... IN (...)` | `Series.isin(...)` |
 | Find earliest value in a group | `MIN()` | `groupby().min()` |
 | Keep the first ordered row per group | `ROW_NUMBER()` + rank 1 | Sort + `cumcount() + 1` |
 | Compare adjacent rows | `LAG()` / `LEAD()` | `shift()` |
@@ -311,12 +383,14 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `SELECT` | Column selection |
 | `WHERE` | Boolean filtering / `.loc[]` |
 | `WHERE ... OR ...` | `query("... or ...")` / boolean OR |
+| `WHERE col IN (...)` | `Series.isin(...)` |
 | `ORDER BY` | `sort_values()` |
 | `DISTINCT` | `drop_duplicates()` |
 | `INNER JOIN` | `merge(how="inner")` |
 | `LEFT JOIN` | `merge(how="left")` |
+| Self join | Self `merge()` |
 | `GROUP BY` | `groupby()` |
-| `HAVING` | Aggregate first, then filter |
+| `HAVING` | Aggregate first, then filter / `query()` |
 | `COUNT()` | `count()` / `size()` |
 | `COUNT(DISTINCT col)` | `nunique()` |
 | `SUM()` | `sum()` |
@@ -332,10 +406,10 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `LAG(column)` | `shift(1)` |
 | `LEAD(column)` | `shift(-1)` |
 | `DATEDIFF(DAY, a, b)` | `b - a` compared with `pd.Timedelta(days=...)` |
-| Self join | Self `merge()` |
 | Multiple aliases of same table | Multiple merges + suffixes |
 | First value per group | `MIN()` or `ROW_NUMBER()` | `groupby().min()` or sort + `cumcount()` |
 | Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `cumcount()` / `drop_duplicates()` |
+| `HAVING COUNT(*) >= N` | Grouped count + filter |
 | Conditional aggregation | `SUM(CASE...)` | Filter / mask + grouped aggregation |
 | Replace missing aggregate with zero | `COALESCE()` | `fillna(0)` |
 
@@ -354,6 +428,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `SELECT`
 - `DISTINCT`
 - `WHERE`
+- `IN`
 - `AND`
 - `OR`
 - `ORDER BY`
@@ -368,6 +443,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `RIGHT JOIN`
 - `FULL OUTER JOIN`
 - self joins
+- parent-child relationships
 - anti-join patterns
 - multiple joins to the same lookup table
 
@@ -383,6 +459,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `HAVING`
 - conditional aggregation
 - grouped ratios
+- count-threshold filtering
 
 ### Intermediate / Advanced Querying
 
@@ -432,6 +509,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `.loc[]`
 - `.iloc[]`
 - `query()`
+- `isin()`
 - `AND` / `OR` filtering
 - date-range filtering
 
@@ -440,6 +518,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `merge()`
 - left / inner merge patterns
 - self merge
+- parent-child self-merge relationships
 - repeated merges against the same lookup DataFrame
 - suffix handling
 - merge-back patterns
@@ -454,6 +533,7 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `mean()`
 - `min()`
 - `max()`
+- threshold-based grouped filtering
 - ratio calculations
 
 ### Ranking and Row Relationships
@@ -523,6 +603,9 @@ Before considering a solution complete, I check cases such as:
 - multiple rows sharing the same maximum or minimum,
 - multiple events occurring on the same earliest date,
 - fewer than N values in Top-N problems,
+- groups exactly on the required count boundary,
+- employees with no manager,
+- managers with fewer than the required number of direct reports,
 - duplicate groups where only the minimum `id` should survive,
 - days or groups with zero matching events,
 - integer division when a decimal result is required,
@@ -531,6 +614,71 @@ Before considering a solution complete, I check cases such as:
 - unique-entity counting vs row counting,
 - filters that return no rows.
 
+### Parent-child relationships in one table
+
+A table can represent both sides of a relationship.
+
+Example:
+
+```text
+Employee.id
+    ↓
+manager identity
+
+Employee.managerId
+    ↓
+points to another Employee.id
+```
+
+This allows:
+
+```text
+manager row
+    ↕
+employee row
+```
+
+to be connected using a self join or self merge.
+
+### `WHERE` vs `HAVING`
+
+```text
+WHERE
+→ filters individual rows before grouping
+
+HAVING
+→ filters groups after aggregation
+```
+
+For example:
+
+```sql
+GROUP BY managerId
+HAVING COUNT(*) >= 5
+```
+
+means:
+
+> First create one group per manager, then keep only managers whose group contains at least five rows.
+
+### `IN` vs `isin()`
+
+SQL:
+
+```sql
+WHERE id IN (...)
+```
+
+Pandas:
+
+```python
+df["id"].isin(values)
+```
+
+Both answer the same question:
+
+> Is this value present inside the allowed set?
+
 ### Previous row vs previous calendar day
 
 ```text
@@ -538,7 +686,7 @@ Before considering a solution complete, I check cases such as:
 2026-08-03
 ```
 
-After sorting, August 1 is the previous row for August 3, but it is **not yesterday**.
+August 1 is the previous row for August 3 after sorting, but it is **not yesterday**.
 
 Therefore:
 
@@ -572,7 +720,7 @@ COUNT(DISTINCT player_id)
 → number of unique players
 ```
 
-Pandas equivalent:
+Pandas:
 
 ```text
 len(df)
@@ -581,8 +729,6 @@ len(df)
 df["player_id"].nunique()
 → unique players
 ```
-
-This distinction matters in retention and user-level metrics.
 
 ### Missing aggregate rows
 
@@ -659,6 +805,8 @@ This repository is intended to strengthen my ability to:
 - write SQL independently,
 - recognize reusable SQL patterns,
 - choose the correct join or aggregation strategy,
+- understand self joins and parent-child relationships,
+- use `WHERE`, `IN`, `GROUP BY`, and `HAVING` correctly,
 - use window functions confidently,
 - distinguish value-level aggregation from row-level selection,
 - distinguish row counts from unique-entity counts,
