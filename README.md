@@ -21,12 +21,12 @@ The goal is not to maximize the number of solved questions. The goal is to build
 | Metric | Current Status |
 | --- | --- |
 | Practice started | 2026-08-14 |
-| Latest entry | 2026-09-03 |
-| Data problems completed | **17** |
-| SQL solution files | **17** |
-| Pandas recreation files | **17** |
+| Latest entry | 2026-09-04 |
+| Data problems completed | **19** |
+| SQL solution files | **19** |
+| Pandas recreation files | **19** |
 | Primary SQL dialect | **Microsoft SQL Server / T-SQL** |
-| Practice style | **1 data problem per practice day, depth-first** |
+| Practice style | **Depth-first; usually 1 problem per day, occasionally 2 simple problems** |
 
 ---
 
@@ -91,7 +91,9 @@ sql-pandas-practice/
 │       └── 09/
 │           ├── 2026-09-01-big-countries.sql
 │           ├── 2026-09-02-game-play-analysis-iv.sql
-│           └── 2026-09-03-managers-with-at-least-5-direct-reports.sql
+│           ├── 2026-09-03-managers-with-at-least-5-direct-reports.sql
+│           ├── 2026-09-04-employee-bonus.sql
+│           └── 2026-09-04-find-customer-referee.sql
 │
 ├── pandas/
 │   └── 2026/
@@ -114,7 +116,9 @@ sql-pandas-practice/
 │       └── 09/
 │           ├── 2026-09-01-big-countries.py
 │           ├── 2026-09-02-game-play-analysis-iv.py
-│           └── 2026-09-03-managers-with-at-least-5-direct-reports.py
+│           ├── 2026-09-03-managers-with-at-least-5-direct-reports.py
+│           ├── 2026-09-04-employee-bonus.py
+│           └── 2026-09-04-find-customer-referee.py
 │
 └── README.md
 ```
@@ -125,14 +129,21 @@ sql-pandas-practice/
 YYYY-MM-DD-problem-name.extension
 ```
 
-Example:
+Examples:
 
 ```text
-sql/2026/09/2026-09-03-managers-with-at-least-5-direct-reports.sql
-pandas/2026/09/2026-09-03-managers-with-at-least-5-direct-reports.py
+sql/2026/09/2026-09-04-employee-bonus.sql
+pandas/2026/09/2026-09-04-employee-bonus.py
 ```
 
-This keeps the repository chronological, searchable, and easy to scale over long-term practice.
+Month folders follow the problem date:
+
+```text
+2026-08-*  →  08/
+2026-09-*  →  09/
+```
+
+This keeps the repository chronological, searchable, and easy to scale.
 
 ---
 
@@ -157,117 +168,144 @@ This keeps the repository chronological, searchable, and easy to scale over long
 | 2026-09-01 | Big Countries | `WHERE`, `OR`, filtering | `query()`, boolean filtering, column selection |
 | 2026-09-02 | Game Play Analysis IV | CTE, `MIN()`, join, `DATEDIFF()`, ratio calculation | `nunique()`, `groupby().min()`, `merge()`, `Timedelta`, boolean mask |
 | 2026-09-03 | Managers with at Least 5 Direct Reports | `IN`, `GROUP BY`, `HAVING`, self join | Self `merge()`, `groupby()`, `count()`, `query()`, `isin()` |
+| 2026-09-04 | Employee Bonus | `LEFT JOIN`, `IS NULL`, `OR` | `merge(how="left")`, `isna()`, boolean mask |
+| 2026-09-04 | Find Customer Referee | `WHERE`, `IS NULL`, `<>`, `OR` | `query()`, `isnull()`, column selection |
 
 ---
 
 ## Recent Learning Highlights
 
-### Managers with at Least 5 Direct Reports
+### Employee Bonus
 
-This problem reinforced how a **hierarchical relationship stored inside one table** can be solved in more than one useful way.
-
-Two SQL approaches were practiced.
-
-#### Approach 1 — Group manager IDs directly
+This problem reinforced a very common missing-match pattern.
 
 ```text
-Employee rows
-    ↓
-GROUP BY managerId
-    ↓
-HAVING COUNT(*) >= 5
-    ↓
-Use those IDs to retrieve manager names
+Keep every employee
+        ↓
+Attach bonus if available
+        ↓
+Keep:
+bonus < 1000
+OR
+bonus is missing
 ```
 
-The key SQL pattern is:
+SQL:
 
 ```sql
-WHERE id IN (
-    SELECT managerId
-    FROM Employee
-    GROUP BY managerId
-    HAVING COUNT(*) >= 5
+LEFT JOIN Bonus
+    ON Employee.empId = Bonus.empId
+
+WHERE bonus IS NULL
+   OR bonus < 1000
+```
+
+Pandas:
+
+```python
+merge(..., how="left")
+
+df["bonus"].isna() | (df["bonus"] < 1000)
+```
+
+Reusable lesson:
+
+> **A left join followed by a NULL check is often used when missing matches are meaningful and must remain in the result.**
+
+---
+
+### Find Customer Referee
+
+This problem reinforced SQL NULL logic.
+
+Requirement:
+
+```text
+Keep customers whose referee is NOT 2
+including customers with no referee
+```
+
+The SQL condition must explicitly include NULL:
+
+```sql
+WHERE referee_id IS NULL
+   OR referee_id <> 2
+```
+
+because:
+
+```text
+NULL <> 2
+```
+
+does not evaluate to `TRUE` in SQL.
+
+Pandas recreation:
+
+```python
+customer.query(
+    "referee_id.isnull() or referee_id != 2"
 )
 ```
 
-This is the simpler approach when the table already stores the manager identifier directly.
+Reusable lesson:
 
-#### Approach 2 — Self Join
+> **When NULL rows should survive a filter, handle them explicitly instead of assuming a normal comparison will include them.**
 
-The same table can represent two roles:
+---
 
-```text
-m = manager
-e = employee / direct report
-```
+### Managers with at Least 5 Direct Reports
 
-Relationship:
+This problem reinforced how a hierarchical relationship inside one table can be solved using:
 
 ```text
-m.id = e.managerId
+GROUP BY managerId + HAVING
 ```
 
-After the self join, grouping by the manager ID counts the number of employees reporting directly to each manager.
+or:
 
-The Pandas recreation follows the same self-join idea:
+```text
+Self Join
+```
+
+Pandas used the same self-relationship through:
 
 ```text
 self merge
-    ↓
-group by manager id
-    ↓
-count direct reports
-    ↓
-query count >= 5
-    ↓
-isin() to retrieve manager names
+→ groupby
+→ count
+→ query
+→ isin
 ```
-
-Important reusable lesson:
-
-> **When one table contains a parent-child or manager-employee relationship, self join / self merge is a reusable pattern for connecting the two roles.**
 
 ---
 
 ### Game Play Analysis IV
 
-This problem combined multiple concepts into one compact retention-style calculation.
-
 ```text
-Find each player's first login
-        ↓
-Compare all activity with first login
-        ↓
-Check exact +1 day return
-        ↓
-Count returning players
-        ↓
-Divide by total unique players
-        ↓
-Round to 2 decimal places
+First login
+    ↓
+exact next-day login
+    ↓
+returning players / total players
 ```
 
-SQL concepts reinforced:
+Key concepts:
 
 ```text
-GROUP BY + MIN()
-CTE
+SQL:
+MIN()
+GROUP BY
 JOIN
 DATEDIFF()
-COUNT(DISTINCT ...)
-decimal division
+COUNT(DISTINCT)
 ROUND()
-```
 
-Pandas concepts reinforced:
-
-```text
-nunique()
+Pandas:
 groupby().min()
 merge()
-datetime subtraction
-pd.Timedelta(days=1)
+Timedelta
+nunique()
 boolean mask
 round()
 ```
@@ -276,103 +314,77 @@ round()
 
 ### Big Countries
 
-This problem reinforced a simple but important pattern:
+A reminder that simple problems should stay simple:
 
 ```text
 Filter rows
-        ↓
-Select only required columns
+→ select required columns
 ```
 
 SQL:
 
-```text
+```sql
 WHERE condition1 OR condition2
 ```
 
 Pandas:
 
 ```python
-df.query("condition1 or condition2")[["col1", "col2", "col3"]]
+query("condition1 or condition2")
 ```
-
-Not every problem needs a complex approach. The simplest correct operation is often the best one.
 
 ---
 
 ### Rising Temperature
 
-This problem reinforced the difference between:
-
 ```text
-previous row
+Previous row ≠ always previous calendar day
 ```
-
-and:
-
-```text
-previous calendar day
-```
-
-A row can be previous after sorting without being exactly one day earlier.
 
 Therefore:
 
 ```text
 SQL:
-LAG() / self join
-+
-DATEDIFF(...)=1
-```
+LAG() / self join + DATEDIFF()
 
-and:
-
-```text
 Pandas:
-shift(1)
-+
-datetime subtraction == pd.Timedelta(days=1)
+shift() + Timedelta comparison
 ```
-
-must be combined when the business rule explicitly says **yesterday**.
 
 ---
 
 ## Patterns Learned
 
-This repository focuses on **reusable problem-solving patterns**, not isolated syntax.
-
 | Pattern | SQL Thinking | Pandas Thinking |
 | --- | --- | --- |
 | Preserve every row from the left table | `LEFT JOIN` | `merge(..., how="left")` |
 | Find unmatched rows | `LEFT JOIN` + `IS NULL` | Left merge + `isna()` |
+| Keep missing matches or low values | `IS NULL OR value < N` | `isna() \| (value < N)` |
 | Match only common rows | `INNER JOIN` | `merge(..., how="inner")` |
 | Compare rows in the same table | Self join | Self `merge()` |
-| Model parent-child relationships in one table | Self join using parent/child keys | Self merge using `left_on` / `right_on` |
-| Join one lookup table for multiple roles | Join same table with separate aliases | Merge same DataFrame multiple times with suffixes |
+| Model parent-child relationships | Self join using parent/child keys | Self merge using `left_on` / `right_on` |
 | Detect duplicate values | `GROUP BY` + `HAVING COUNT(*) > 1` | `groupby()` / `duplicated()` |
 | Aggregate by group | `GROUP BY` | `groupby()` |
 | Filter aggregated results | `HAVING` | Aggregate, then filter / `query()` |
-| Find groups meeting a minimum count | `GROUP BY` + `HAVING COUNT(*) >= N` | `groupby().count()` + filter |
-| Filter rows using a derived set of IDs | `WHERE ... IN (...)` | `Series.isin(...)` |
+| Find groups meeting minimum count | `HAVING COUNT(*) >= N` | Grouped count + filter |
+| Filter rows using a set of IDs | `WHERE ... IN (...)` | `isin()` |
 | Find earliest value in a group | `MIN()` | `groupby().min()` |
-| Keep the first ordered row per group | `ROW_NUMBER()` + rank 1 | Sort + `cumcount() + 1` |
+| Keep first ordered row per group | `ROW_NUMBER()` + rank 1 | Sort + `cumcount() + 1` |
 | Compare adjacent rows | `LAG()` / `LEAD()` | `shift()` |
-| Validate exact calendar-day gaps | `DATEDIFF()` | datetime subtraction + `Timedelta` |
+| Validate exact day gaps | `DATEDIFF()` | datetime subtraction + `Timedelta` |
 | Rank without gaps | `DENSE_RANK()` | `rank(method="dense")` |
 | Rank with gaps | `RANK()` | `rank(method="min")` |
-| Assign ordered row numbers | `ROW_NUMBER()` | Ordered `cumcount() + 1` |
-| Find group maximum | `MAX()` / window function | `groupby().max()` |
-| Keep rows matching a group maximum | Window rank / max comparison | Aggregate + merge back |
-| Top-N distinct values per group | `DENSE_RANK()` + filter | Grouped dense rank + filter |
-| Keep one row from each duplicate group | `ROW_NUMBER()` + keep rank 1 | Sort + `drop_duplicates(keep="first")` |
-| Conditional counting | `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` | Boolean filter + grouped count |
-| Preserve zero-count groups | Conditional aggregation / outer join | Left merge + `fillna(0)` |
-| Count unique entities | `COUNT(DISTINCT column)` | `nunique()` |
-| Calculate ratios safely | Decimal conversion + division | Numeric division + `round()` |
-| Filter with OR conditions | `WHERE ... OR ...` | `query()` / boolean mask |
-| Remove duplicate rows | `DISTINCT` | `drop_duplicates()` |
-| Handle missing values | `IS NULL` / `IS NOT NULL` | `isna()` / `notna()` |
+| Assign row numbers | `ROW_NUMBER()` | ordered `cumcount() + 1` |
+| Find group maximum | `MAX()` | `groupby().max()` |
+| Top-N distinct values per group | `DENSE_RANK()` + filter | grouped dense rank + filter |
+| Keep one duplicate row | `ROW_NUMBER()` + rank 1 | sort + `drop_duplicates()` |
+| Conditional counting | `SUM(CASE WHEN...)` | mask/filter + grouped count |
+| Preserve zero-count groups | Conditional aggregation / outer join | left merge + `fillna(0)` |
+| Count unique entities | `COUNT(DISTINCT col)` | `nunique()` |
+| Calculate ratios | decimal division | numeric division + `round()` |
+| OR filtering | `WHERE ... OR ...` | `query()` / `\|` |
+| NULL filtering | `IS NULL` / `IS NOT NULL` | `isna()` / `notna()` |
+| Not-equal with possible NULLs | Explicit `IS NULL OR <>` | `isnull() or !=` |
 
 ---
 
@@ -382,7 +394,7 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | --- | --- |
 | `SELECT` | Column selection |
 | `WHERE` | Boolean filtering / `.loc[]` |
-| `WHERE ... OR ...` | `query("... or ...")` / boolean OR |
+| `WHERE ... OR ...` | `query("... or ...")` / `\|` |
 | `WHERE col IN (...)` | `Series.isin(...)` |
 | `ORDER BY` | `sort_values()` |
 | `DISTINCT` | `drop_duplicates()` |
@@ -390,7 +402,7 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `LEFT JOIN` | `merge(how="left")` |
 | Self join | Self `merge()` |
 | `GROUP BY` | `groupby()` |
-| `HAVING` | Aggregate first, then filter / `query()` |
+| `HAVING` | Aggregate first, then filter |
 | `COUNT()` | `count()` / `size()` |
 | `COUNT(DISTINCT col)` | `nunique()` |
 | `SUM()` | `sum()` |
@@ -398,20 +410,19 @@ This repository focuses on **reusable problem-solving patterns**, not isolated s
 | `MAX()` | `max()` |
 | `MIN()` | `min()` |
 | `CASE WHEN` | Boolean masks / conditional assignment |
-| `IS NULL` | `isna()` |
-| `IS NOT NULL` | `notna()` |
+| `IS NULL` | `isna()` / `isnull()` |
+| `IS NOT NULL` | `notna()` / `notnull()` |
+| `<>` / `!=` | `!=` |
 | `DENSE_RANK()` | `rank(method="dense")` |
 | `RANK()` | `rank(method="min")` |
-| `ROW_NUMBER()` | Ordered `cumcount() + 1` |
+| `ROW_NUMBER()` | ordered `cumcount() + 1` |
 | `LAG(column)` | `shift(1)` |
 | `LEAD(column)` | `shift(-1)` |
-| `DATEDIFF(DAY, a, b)` | `b - a` compared with `pd.Timedelta(days=...)` |
-| Multiple aliases of same table | Multiple merges + suffixes |
-| First value per group | `MIN()` or `ROW_NUMBER()` | `groupby().min()` or sort + `cumcount()` |
-| Keep first row per group | `ROW_NUMBER()` + rank filter | Sort + `cumcount()` / `drop_duplicates()` |
-| `HAVING COUNT(*) >= N` | Grouped count + filter |
-| Conditional aggregation | `SUM(CASE...)` | Filter / mask + grouped aggregation |
-| Replace missing aggregate with zero | `COALESCE()` | `fillna(0)` |
+| `DATEDIFF(DAY, a, b)` | `b - a` + `pd.Timedelta(...)` |
+| First value per group | `MIN()` / `ROW_NUMBER()` | `groupby().min()` / sort + `cumcount()` |
+| `HAVING COUNT(*) >= N` | grouped count + filter |
+| Conditional aggregation | `SUM(CASE...)` | mask/filter + aggregation |
+| `COALESCE()` | `fillna()` |
 
 The objective is **not** to force every SQL statement into a literal one-to-one Pandas translation.
 
@@ -431,10 +442,11 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `IN`
 - `AND`
 - `OR`
+- `<>`
 - `ORDER BY`
 - aliases
-- date filtering
 - NULL handling
+- date filtering
 
 ### Joins
 
@@ -445,7 +457,7 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - self joins
 - parent-child relationships
 - anti-join patterns
-- multiple joins to the same lookup table
+- repeated joins to the same lookup table
 
 ### Aggregation
 
@@ -458,18 +470,18 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `GROUP BY`
 - `HAVING`
 - conditional aggregation
+- count thresholds
 - grouped ratios
-- count-threshold filtering
 
 ### Intermediate / Advanced Querying
 
 - subqueries
 - correlated subqueries
-- Common Table Expressions (CTEs)
-- set operations
+- Common Table Expressions
 - `CASE`
 - scalar functions
 - `DELETE`
+- set operations
 
 ### Window Functions
 
@@ -479,19 +491,17 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 - `LAG()`
 - `LEAD()`
 - partitioned calculations
-- first-row-per-group patterns
 
 ### Date Logic
 
 - `DATEDIFF()`
 - exact day-gap validation
-- date range filtering
+- date ranges
 - previous-row vs previous-day reasoning
 
 ### Future Depth
 
 - indexes
-- query execution
 - execution plans
 - query optimization
 - performance trade-offs
@@ -499,8 +509,6 @@ Solutions are primarily written using **Microsoft SQL Server / T-SQL**.
 ---
 
 ## Pandas Focus
-
-Pandas practice develops the ability to translate tabular requirements into readable DataFrame operations.
 
 ### Selection and Filtering
 
@@ -510,16 +518,17 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `.iloc[]`
 - `query()`
 - `isin()`
-- `AND` / `OR` filtering
-- date-range filtering
+- `isna()` / `isnull()`
+- `notna()` / `notnull()`
+- AND / OR filtering
+- date filtering
 
 ### Combining Data
 
 - `merge()`
-- left / inner merge patterns
+- left / inner merges
 - self merge
-- parent-child self-merge relationships
-- repeated merges against the same lookup DataFrame
+- parent-child self relationships
 - suffix handling
 - merge-back patterns
 
@@ -533,8 +542,8 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `mean()`
 - `min()`
 - `max()`
-- threshold-based grouped filtering
-- ratio calculations
+- grouped threshold filtering
+- ratios
 
 ### Ranking and Row Relationships
 
@@ -543,7 +552,6 @@ Pandas practice develops the ability to translate tabular requirements into read
 - `cumcount()`
 - grouped ranking
 - first-row-per-group logic
-- window-like operations
 
 ### Date and Time Logic
 
@@ -556,36 +564,15 @@ Pandas practice develops the ability to translate tabular requirements into read
 
 - `duplicated()`
 - `drop_duplicates()`
-- `isna()`
-- `notna()`
 - `fillna()`
 - `rename()`
 - `to_frame()`
 - `sort_values()`
 - in-place modification
-- reshaping
 - string operations
 - feature creation
 
-Pandas methods are learned **when a problem naturally requires them**, rather than being memorized in isolation.
-
----
-
-## Solution Standards
-
-Every solution should be:
-
-- **independently reasoned**
-- **correct for the required output**
-- **readable**
-- **properly formatted**
-- **easy to explain**
-- **aware of important edge cases**
-- **free from unnecessary complexity**
-
-Multiple SQL approaches are included **only when the alternative teaches a useful pattern or trade-off**.
-
-The preferred solution is usually the **simplest correct approach that matches the requirement clearly**.
+Pandas methods are learned **when a problem naturally requires them**, rather than memorized in isolation.
 
 ---
 
@@ -595,177 +582,42 @@ Before considering a solution complete, I check cases such as:
 
 - empty input or empty result,
 - duplicate values,
-- ties in ranking problems,
-- `NULL` values in SQL,
-- `NaN` values in Pandas,
+- ties,
+- SQL `NULL`,
+- Pandas `NaN`,
 - missing join matches,
-- groups with a single row,
-- multiple rows sharing the same maximum or minimum,
-- multiple events occurring on the same earliest date,
-- fewer than N values in Top-N problems,
-- groups exactly on the required count boundary,
-- employees with no manager,
-- managers with fewer than the required number of direct reports,
-- duplicate groups where only the minimum `id` should survive,
-- days or groups with zero matching events,
-- integer division when a decimal result is required,
-- missing calendar dates when comparing adjacent rows,
-- previous row vs actual previous calendar day,
-- unique-entity counting vs row counting,
-- filters that return no rows.
+- groups with one row,
+- multiple rows sharing max/min,
+- exact count boundaries,
+- employees without managers,
+- missing bonus records,
+- nullable foreign/reference IDs,
+- zero-count groups,
+- integer division,
+- missing calendar dates,
+- unique entities vs row counts,
+- filters returning no rows.
 
-### Parent-child relationships in one table
+### Important NULL lesson
 
-A table can represent both sides of a relationship.
-
-Example:
-
-```text
-Employee.id
-    ↓
-manager identity
-
-Employee.managerId
-    ↓
-points to another Employee.id
-```
-
-This allows:
-
-```text
-manager row
-    ↕
-employee row
-```
-
-to be connected using a self join or self merge.
-
-### `WHERE` vs `HAVING`
-
-```text
-WHERE
-→ filters individual rows before grouping
-
-HAVING
-→ filters groups after aggregation
-```
+SQL follows three-valued logic.
 
 For example:
 
 ```sql
-GROUP BY managerId
-HAVING COUNT(*) >= 5
+referee_id <> 2
 ```
 
-means:
+does **not** automatically include `NULL`.
 
-> First create one group per manager, then keep only managers whose group contains at least five rows.
-
-### `IN` vs `isin()`
-
-SQL:
+If NULL should remain:
 
 ```sql
-WHERE id IN (...)
+referee_id IS NULL
+OR referee_id <> 2
 ```
 
-Pandas:
-
-```python
-df["id"].isin(values)
-```
-
-Both answer the same question:
-
-> Is this value present inside the allowed set?
-
-### Previous row vs previous calendar day
-
-```text
-2026-08-01
-2026-08-03
-```
-
-August 1 is the previous row for August 3 after sorting, but it is **not yesterday**.
-
-Therefore:
-
-```text
-SQL:
-LAG() + DATEDIFF()
-
-Pandas:
-shift() + datetime subtraction + Timedelta
-```
-
-may be needed together.
-
-### First value vs first row
-
-```text
-Need only the minimum value
-→ MIN() / groupby().min()
-
-Need columns from the row containing that value
-→ ROW_NUMBER() / sort + cumcount()
-```
-
-### Row count vs unique entity count
-
-```text
-COUNT(*)
-→ number of rows
-
-COUNT(DISTINCT player_id)
-→ number of unique players
-```
-
-Pandas:
-
-```text
-len(df)
-→ rows
-
-df["player_id"].nunique()
-→ unique players
-```
-
-### Missing aggregate rows
-
-A group may exist but have zero rows in a filtered subset.
-
-Pandas:
-
-```python
-left merge + fillna(0)
-```
-
-can preserve the group.
-
-SQL conditional aggregation can often avoid losing the group in the first place.
-
-### Empty aggregate behavior
-
-```text
-Normal SELECT with no matching rows
-→ zero rows
-
-MAX() / MIN() over no matching rows
-→ one row containing NULL
-```
-
-Pandas:
-
-```python
-empty_series.max()
-empty_series.min()
-```
-
-returns:
-
-```text
-NaN
-```
+This is a reusable interview pattern.
 
 ---
 
@@ -773,16 +625,15 @@ NaN
 
 ### SQL
 
-- Uppercase SQL keywords
+- Uppercase keywords
 - Consistent indentation
 - Meaningful aliases
-- Explicit join conditions
+- Explicit joins
+- Clear NULL logic
 - Readable window functions
-- Clear conditional aggregation
-- Safe decimal division for ratios
+- Safe decimal division
 - Semicolons at statement boundaries
-- Clear approach labels when multiple solutions are useful
-- Prefer the simplest correct solution when extra complexity adds no value
+- Prefer the simplest correct solution
 
 ### Python / Pandas
 
@@ -790,10 +641,10 @@ NaN
 - Meaningful variable names
 - Type hints where useful
 - Readable transformations
+- Clear boolean masks
 - Minimal unnecessary comments
 - Avoid overly complex one-liners
-- Keep transformations aligned with the underlying data logic
-- Prefer code that can be clearly explained in an interview
+- Prefer code that can be clearly explained
 
 ---
 
@@ -801,26 +652,25 @@ NaN
 
 This repository is intended to strengthen my ability to:
 
-- translate business and data requirements into queries,
-- write SQL independently,
-- recognize reusable SQL patterns,
-- choose the correct join or aggregation strategy,
-- understand self joins and parent-child relationships,
-- use `WHERE`, `IN`, `GROUP BY`, and `HAVING` correctly,
+- translate requirements into SQL and Pandas,
+- solve independently,
+- recognize reusable patterns,
+- choose correct joins,
+- understand self joins,
+- use `WHERE`, `IN`, `GROUP BY`, and `HAVING`,
+- reason correctly about NULL values,
 - use window functions confidently,
-- distinguish value-level aggregation from row-level selection,
-- distinguish row counts from unique-entity counts,
-- use conditional aggregation correctly,
+- distinguish row-level vs aggregate filtering,
+- distinguish row counts vs unique counts,
 - reason about date continuity,
 - calculate ratios correctly,
 - handle duplicates and missing data,
-- reason about zero-count and empty-result cases,
 - manipulate DataFrames confidently,
 - translate SQL logic into Pandas,
-- compare multiple valid approaches when useful,
-- choose the simplest appropriate approach,
+- compare useful alternative approaches,
+- choose the simplest appropriate solution,
 - write maintainable data code,
-- and explain my reasoning clearly in technical interviews.
+- and explain solutions clearly in interviews.
 
 ---
 
@@ -845,6 +695,8 @@ Pattern Recognition
       ↓
 Stronger Problem Solving
 ```
+
+On some days, two simple problems may be completed when both are understood and solved independently.
 
 A problem is valuable not because it increases a solved-question counter, but because it makes the **next unfamiliar problem easier to solve independently**.
 
